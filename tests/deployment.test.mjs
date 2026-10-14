@@ -10,6 +10,17 @@ import {principal} from '../server/identity/authorization.mjs';
 import {createLeaderService} from '../server/leader/service.mjs';
 import {grantRuntime} from '../server/db/runtime-grants.mjs';
 import {createPool} from '../server/db/pool.mjs';
+import {migrationChecksum,matchesMigration} from '../server/db/migration-checksum.mjs';
+import {readFile} from 'node:fs/promises';
+test('Deploy: checksums históricos Windows compatibles; SQL alterado sigue rechazado',async()=>{
+ const sql=await readFile(new URL('../server/db/migrations/003_cells.sql',import.meta.url),'utf8');
+ const prior='2eaab45a525c36e7be4654a45fb94e474616a2959000c5cf6d98b4dbbee986f2';
+ assert.equal(migrationChecksum('SELECT 1;\r\n'),migrationChecksum('SELECT 1;\n'));
+ assert.ok(matchesMigration('003_cells.sql',prior,migrationChecksum(sql)));
+ assert.ok(!matchesMigration('003_cells.sql',prior,migrationChecksum(sql+'SELECT 2;')));
+ assert.ok(!matchesMigration('other.sql',prior,migrationChecksum(sql)));
+ assert.ok(!matchesMigration('003_cells.sql','unexpected',migrationChecksum(sql)));
+});
 test('Deploy: TLS explícito conserva verificación aunque la URL indique sslmode=require',async()=>{
  const pool=createPool({databaseUrl:'postgresql://example.invalid/erp_demo?sslmode=require',dbSsl:true});
  assert.equal(pool.options.ssl.rejectUnauthorized,true);
