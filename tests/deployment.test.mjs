@@ -9,6 +9,14 @@ import {identityService} from '../server/identity/service.mjs';
 import {principal} from '../server/identity/authorization.mjs';
 import {createLeaderService} from '../server/leader/service.mjs';
 import {grantRuntime} from '../server/db/runtime-grants.mjs';
+import {createPool} from '../server/db/pool.mjs';
+test('Deploy: TLS explícito conserva verificación aunque la URL indique sslmode=require',async()=>{
+ const pool=createPool({databaseUrl:'postgresql://example.invalid/erp_demo?sslmode=require',dbSsl:true});
+ assert.equal(pool.options.ssl.rejectUnauthorized,true);
+ assert.equal(new URL(pool.options.connectionString).searchParams.has('sslmode'),false);
+ assert.equal(pool.options.enableChannelBinding,true);
+ await pool.end();
+});
 test('Deploy: origen Render, identidad pública, paths seguros y configuración local',()=>{
  const env={DATABASE_URL:'postgresql://example.invalid/demo',SESSION_SECRET:randomBytes(48).toString('hex')};
  assert.equal(readConfig(env).host,'127.0.0.1');

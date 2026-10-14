@@ -1,6 +1,6 @@
 # ERP Eclesiástico — Administración 0.5 + Oficina Manantial 1.5
 
-[Preparación del entorno DEMO en Render](docs/DEPLOY-DEMO.md): monolito y PostgreSQL separado, identidad configurable y bootstrap ficticio. Publicación pendiente de resolver el plan de base disponible.
+[Preparación del entorno DEMO en Render](docs/DEPLOY-DEMO.md): monolito y PostgreSQL separado, identidad configurable y bootstrap ficticio. Despliegue gratuito: Render Free + Neon Free.
 
 [Administración 0.5: usuarios, perfiles, permisos y accesos](docs/ADMINISTRACION-USUARIOS.md). Crear y vincular cuentas desde Ficha 360°, asignar áreas/subáreas, suspender, restablecer contraseñas, revocar sesiones y consultar auditoría. Actualizar con `db:migrate` y `db:grant-local`; se conserva la contraseña existente.
 

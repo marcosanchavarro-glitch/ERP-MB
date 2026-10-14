@@ -4,7 +4,10 @@ import {readFileSync} from 'node:fs';
 pg.types.setTypeParser(1082,value=>value);
 pg.types.setTypeParser(1184,value=>new Date(value).toISOString());
 export function createPool(config) {
- return new pg.Pool({connectionString:config.databaseUrl,max:10,connectionTimeoutMillis:5000,idleTimeoutMillis:30000,statement_timeout:10000,
+ const url=new URL(config.databaseUrl);
+ // URL SSL flags must not override explicit certificate verification (pg parses them last).
+ if(config.dbSsl)for(const key of ['sslmode','sslcert','sslkey','sslrootcert'])url.searchParams.delete(key);
+ return new pg.Pool({connectionString:url.href,enableChannelBinding:true,max:10,connectionTimeoutMillis:10000,idleTimeoutMillis:30000,statement_timeout:10000,
   ssl:config.dbSsl?{rejectUnauthorized:true,...(config.dbCa?{ca:readFileSync(config.dbCa,'utf8')}:{})}:undefined});
 }
 export async function transaction(pool,callback) {

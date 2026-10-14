@@ -4,6 +4,7 @@ import {grantRuntime} from '../server/db/runtime-grants.mjs';
 import {seedDeploymentDemo} from '../server/demo-deployment.mjs';
 import {readConfig} from '../server/core/config.mjs';
 // This bootstrap is intentionally DEMO-only. Local and future production keep their own commands.
+let phase='configuration';
 try{
  if(process.env.APP_ENV!=='demo'||process.env.NODE_ENV!=='production')throw new Error('Invalid deployment environment');
  const ownerUrl=new URL(process.env.MIGRATION_DATABASE_URL);
@@ -16,14 +17,16 @@ try{
  const lock=await pool.connect();
  try{
   await lock.query('SELECT pg_advisory_lock(505002)');
-  await migrate(pool);
+  phase='migrations';await migrate(pool);
+  phase='runtime-role';
   if(!(await pool.query('SELECT 1 FROM pg_roles WHERE rolname=$1',[role])).rowCount){
    const sql=(await pool.query("SELECT format('CREATE ROLE %I LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT', $1::text,$2::text) sql",[role,password])).rows[0].sql;
    await pool.query(sql);
   }
-  await grantRuntime(pool,role);
+  phase='grants';await grantRuntime(pool,role);
+  phase='demo-seed';
   if(process.env.ALLOW_DEMO_SEED==='true')await seedDeploymentDemo(pool,process.env);
  }finally{await lock.query('SELECT pg_advisory_unlock(505002)');lock.release();await pool.end();}
  delete process.env.MIGRATION_DATABASE_URL;delete process.env.RUNTIME_DB_PASSWORD;delete process.env.DEMO_BOOTSTRAP_SECRET;
- await import('./serve.mjs');
-}catch{console.error('Inicio DEMO fallido. Revisar configuración, conexión y migraciones con el operador; no se abrió tráfico.');process.exitCode=1;}
+ phase='serve';await import('./serve.mjs');
+}catch(error){console.error(JSON.stringify({event:'demo_start_failed',phase,code:/^[A-Z0-9_]{2,40}$/.test(error.code||'')?error.code:'CONFIG_OR_DATABASE_ERROR'}));process.exitCode=1;}

@@ -20,7 +20,7 @@ Las ocho migraciones existentes usan checksum, transacciones y bloqueo PostgreSQ
 
 Repositorio autorizado: `https://github.com/marcosanchavarro-glitch/ERP-MB`. Workspace confirmado: My Workspace. No se deben modificar los servicios o bases de otros proyectos.
 
-El cupo gratuito de PostgreSQL del workspace está ocupado por otro proyecto. La creación de una base de pago requiere resolver el costo con el usuario. No se ha creado ningún servicio ni base del ERP todavía.
+El cupo gratuito de PostgreSQL de Render está ocupado por otro proyecto y no se modifica. Se utiliza Neon Free: proyecto `erp-demo` (`odd-smoke-59716181`), rama `demo`, base `erp_demo`, región Oregon. La conexión TLS y el bootstrap con ocho cuentas ficticias se verificaron. Render utiliza exclusivamente un Web Service Free.
 
 ## Estado de publicación
 
@@ -28,7 +28,7 @@ Preparación local validada. Todavía no hay una URL pública verificada ni smok
 
 ## Configuración preparada
 
-`render.yaml` define un Web Service gratuito y una base exclusiva. Mantiene la base en `free` como plantilla sin costos autorizados; **no aplicar en el workspace actual** hasta elegir un plan disponible. Propuesta para resolver el cupo ocupado: PostgreSQL `0.1c-256mb` (antes Basic-256mb), desde USD 6/mes de cómputo más almacenamiento y posibles cargos de uso/impuestos. Confirmar precio final en Dashboard. No reutilizar ni borrar la base de otro proyecto.
+`render.yaml` define un Web Service Free conectado a PostgreSQL externo en Neon Free. No crea bases de Render ni recursos de pago. La rama publicada es `codex/render-demo`.
 
 Build: `npm ci --omit=dev`. No hay bundler, salida `dist` ni PostgreSQL portable en el servidor publicado. Node: 24.20.0. Start: `npm run start:render`. Se mantiene `npm run dev` para LOCAL. El proceso DEMO aplica migraciones antes de escuchar, porque el servicio web gratuito no dispone de pre-deploy command. Un fallo impide abrir tráfico. El bloqueo de despliegue serializa bootstrap y grants; las migraciones tienen su propio bloqueo y checksum.
 
@@ -41,7 +41,7 @@ El arranque crea `erp_demo_app` sin privilegios de propietario y aplica los mism
 | `NODE_ENV=production` | Seguridad HTTPS real, aunque la instalación sea DEMO |
 | `APP_ENV=demo` | Clasifica la instalación y permite bootstrap exclusivamente DEMO |
 | `HOST=0.0.0.0`, `PORT` de Render | Socket público detrás del proxy |
-| `MIGRATION_DATABASE_URL` | URL interna de PostgreSQL DEMO; secreto referenciado desde Blueprint |
+| `MIGRATION_DATABASE_URL` | URL directa de Neon PostgreSQL DEMO; secreto privado, con TLS obligatorio |
 | `RUNTIME_DB_PASSWORD` | 48 bytes aleatorios hex; rol restringido; no cambiar sin rotación SQL coordinada |
 | `DATABASE_URL` | Construida en memoria por el arranque usando el rol restringido |
 | `SESSION_SECRET` | 48 bytes aleatorios hex, independiente de LOCAL; cambiarlo invalida sesiones |
@@ -79,13 +79,13 @@ Logs estructurados: método, ruta, estado, duración, request ID y código segur
 
 ## Publicación y actualización
 
-1. Resolver plan PostgreSQL y validar `render.yaml` antes de Apply.
+1. Crear Neon Free exclusivo y validar `render.yaml`.
 2. Ejecutar suites, revisar secretos, commit y push del código a GitHub.
-3. Crear Blueprint desde ese repositorio en el workspace confirmado; cargar los tres secretos privados y confirmar el costo.
+3. Crear Web Service Free desde ese repositorio en el workspace confirmado; cargar los secretos privados y la conexión de Neon con `DB_SSL=true`.
 4. Esperar deploy `live`, verificar URL que Render realmente asignó y ejecutar pruebas públicas.
 5. Desactivar seed y comprobar un redeploy sin pérdida de datos/cuentas/sesiones.
 
-Una vez conectado, cada push a la rama de despliegue activa redeploy. La base y secretos permanecen; el filesystem web es efímero y no guarda datos del ERP. No se ejecuta reset ni importación de LOCAL. Los datos persisten a través de redeploy mientras exista la base. El servicio gratuito puede dormirse por inactividad; el primer acceso puede tardar. Una base gratuita expira a los 30 días y no sirve para persistencia indefinida.
+Una vez conectado, cada push a la rama de despliegue activa redeploy. La base y secretos permanecen; el filesystem web es efímero y no guarda datos del ERP. No se ejecuta reset ni importación de LOCAL. Los datos persisten a través de redeploy mientras exista la base. El servicio gratuito puede dormirse por inactividad; el primer acceso puede tardar. Neon Free tiene límites propios de cómputo y almacenamiento; verificar cuotas en ambos proveedores. No se utiliza la base temporal gratuita de Render.
 
 Rollback: volver a un commit compatible con el esquema aplicado y redeployar. No modificar checksums ni ejecutar migraciones inversas improvisadas. Un cambio destructivo futuro exige backup y restauración ensayada en una base separada. No eliminar la base para corregir un deploy.
 
