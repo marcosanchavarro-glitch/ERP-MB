@@ -1,0 +1,2 @@
+import {sessionState} from '../auth/session.js';
+export async function api(path='',options={}){let r;try{r=await fetch('/api/followup'+path,{...options,headers:{'Content-Type':'application/json','X-CSRF-Token':sessionState.csrfToken||'',...options.headers}});}catch{throw new Error('No pudimos conectar. El formulario sigue en pantalla.');}const data=await r.json();if(!r.ok){if(r.status===401)window.dispatchEvent(new Event('session-expired'));throw Object.assign(new Error(data.message),{status:r.status});}return data;}

@@ -1,0 +1,11 @@
+import {spawn} from 'node:child_process';
+import {mkdir} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {readConfig} from '../server/core/config.mjs';
+const config=readConfig(),url=new URL(process.env.BACKUP_DATABASE_URL || process.env.MIGRATION_DATABASE_URL || config.databaseUrl);
+const directory=resolve('backups');await mkdir(directory,{recursive:true});
+const filename=resolve(directory,`erp-${new Date().toISOString().replaceAll(':','-')}.dump`);
+const env={...process.env,PGHOST:url.hostname,PGPORT:url.port || '5432',PGDATABASE:url.pathname.slice(1),PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGSSLMODE:config.dbSsl?'verify-full':'prefer',...(config.dbCa?{PGSSLROOTCERT:config.dbCa}:{})};
+const child=spawn(process.env.PG_DUMP_BIN || 'pg_dump',['--format=custom','--no-owner','--no-acl','--exclude-table-data=public.sessions','--file',filename],{env,windowsHide:true,stdio:['ignore','ignore','ignore']});
+child.once('error',()=>{console.error('No se pudo ejecutar pg_dump. Instalá los clientes PostgreSQL y configurá PG_DUMP_BIN.');process.exitCode=1;});
+child.once('exit',code=>{if(code===0)console.log(`Backup creado: ${filename}. Debe cifrarse, copiarse y probar su restauración.`);else{console.error('pg_dump falló; el archivo parcial no debe considerarse un backup válido.');process.exitCode=1;}});

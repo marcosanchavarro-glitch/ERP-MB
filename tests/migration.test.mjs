@@ -1,0 +1,25 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync,mkdtempSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {fixture} from './helpers.mjs';
+import {importSqlite} from '../scripts/import-sqlite.mjs';
+test('Conversión SQLite conserva UUID, versiones, eventos y valores de auditoría; es idempotente',async t=>{
+ const f=await fixture();t.after(()=>f.close());
+ const file=join(mkdtempSync(join(tmpdir(),'erp-legacy-')),'legacy.sqlite'),db=new DatabaseSync(file);
+ db.exec(readFileSync(resolve('scripts/legacy/001_people.sql'),'utf8'));
+ const id=randomUUID(),created='2026-01-01T10:00:00.000Z',updated='2026-01-02T10:00:00.000Z';
+ db.prepare('INSERT INTO people(id,names,lastNames,status,nameKey,phoneKey,localityKey,searchText,sortName,createdAt,updatedAt,version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,'Demo','Migración','ACTIVA','demo migracion','','','demo migracion','migracion demo',created,updated,7);
+ const eventId=randomUUID(),auditId=randomUUID();
+ db.prepare('INSERT INTO person_events VALUES(?,?,?,?,?,?,?)').run(eventId,id,'person.created','people','Persona creada.','system:legacy',created);
+ db.prepare('INSERT INTO person_audit_changes VALUES(?,?,?,?,?)').run(auditId,id,'system:legacy',updated,JSON.stringify([{field:'notes',before:null,after:'Observación demo'}]));db.close();
+ assert.deepEqual(await importSqlite(f.pool,file),{people:1,events:1,audit:1});
+ const person=await f.people.get(id);assert.equal(person.id,id);assert.equal(person.version,7);assert.equal(person.createdAt,created);
+ assert.equal((await f.people.history(id)).items[0].id,eventId);
+ const audit=(await f.pool.query('SELECT * FROM audit_events WHERE id=$1',[auditId])).rows[0];assert.equal(audit.action,'PERSON_UPDATE');assert.deepEqual(audit.changes,[{field:'notes',before:null,after:'Observación demo'}]);
+ assert.deepEqual(await importSqlite(f.pool,file),{alreadyImported:true});assert.equal((await f.people.list()).total,1);
+ const original=new DatabaseSync(file,{readOnly:true});assert.equal(original.prepare('SELECT version FROM people').get().version,7);original.close();
+});

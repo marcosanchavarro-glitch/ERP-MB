@@ -1,0 +1,6 @@
+# Keep migration checksums and scripts identical on Windows and Linux.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary

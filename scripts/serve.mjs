@@ -1,0 +1,12 @@
+import {readConfig} from '../server/core/config.mjs';
+import {createPool} from '../server/db/pool.mjs';
+import {createPeopleService} from '../server/people/service.mjs';
+import {createAppServer} from '../server/http.mjs';
+import {log} from '../server/core/logger.mjs';
+const config=readConfig(),pool=createPool(config);
+pool.on('error',()=>log('error','database_pool_error'));
+await pool.query('SELECT 1 FROM people LIMIT 1');
+const server=await createAppServer(createPeopleService(pool),{pool,config});
+server.listen(config.port,config.host,()=>console.log('ERP: '+config.origin));
+const stop=()=>server.close(async()=>{await pool.end();process.exit(0);});
+process.on('SIGINT',stop);process.on('SIGTERM',stop);

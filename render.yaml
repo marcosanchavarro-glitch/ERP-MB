@@ -1,0 +1,47 @@
+# DEMO only. The free database slot in the current workspace is occupied.
+# Do not Apply until the database plan/cost is confirmed; see docs/DEPLOY-DEMO.md.
+services:
+  - type: web
+    name: erp-mb-demo
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run start:render
+    healthCheckPath: /health/ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: demo
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_NAME
+        value: ERP Demo
+      - key: ORGANIZATION_NAME
+        value: Manantial de Bendiciones
+      - key: TRUST_PROXY
+        value: loopback,linklocal,uniquelocal
+      - key: SESSION_SECRET
+        sync: false
+      - key: RUNTIME_DB_PASSWORD
+        sync: false
+      - key: DEMO_BOOTSTRAP_SECRET
+        sync: false
+      - key: ALLOW_DEMO_SEED
+        value: "true"
+      - key: MIGRATION_DATABASE_URL
+        fromDatabase:
+          name: erp-demo-db
+          property: connectionString
+databases:
+  - name: erp-demo-db
+    databaseName: erp_demo
+    user: erp_demo_owner
+    region: oregon
+    plan: free
+    postgresMajorVersion: "18"
+    ipAllowList: []

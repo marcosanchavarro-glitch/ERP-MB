@@ -1,0 +1,12 @@
+node_modules/
+test-results/
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.*
+!.env.example
+.local/
+backups/
+*.dump

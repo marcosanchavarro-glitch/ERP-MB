@@ -1,0 +1,2 @@
+// Relationship resolver, not an account grant. Callers must also require explicit portal authorization.
+export async function leaderCellIds(pool,userId){return (await pool.query('SELECT m."cellId" FROM users u JOIN cell_memberships m ON m."personId"=u.person_id JOIN cells c ON c.id=m."cellId" WHERE u.id=$1 AND u.active AND c.status=\'ACTIVE\' AND m.role=\'LEADER\' AND m."endDate" IS NULL AND m."startDate"<=(now() AT TIME ZONE \'America/Argentina/Buenos_Aires\')::date',[userId])).rows.map(r=>r.cellId);}
