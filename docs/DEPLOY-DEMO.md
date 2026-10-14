@@ -104,3 +104,5 @@ Referencias: [variables de Render](https://render.com/docs/environment-variables
 Accesos iniciales privados: `.local/ACCESOS-DEMO.txt`. No es necesario registrarse; usar `demo.admin` y su contraseña de ese archivo. Los otros siete perfiles permiten probar las restricciones. Este archivo no contiene secretos de infraestructura y está excluido de Git. Los archivos originales privados de infraestructura siguen en `.local/`.
 
 El servicio está en Free y la base Neon se verificó como Free; no se crearon recursos de pago. Las cuotas gratuitas y el reposo por inactividad siguen aplicando. URL pública y cuentas corresponden exclusivamente a DEMO.
+
+Prueba funcional pública móvil: líder `demo.lider`, célula D1 F, reunión del 12/10/2026; apertura, tres presentes, revisión y confirmación con observación explícitamente ficticia.
