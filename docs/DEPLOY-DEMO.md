@@ -24,7 +24,7 @@ El cupo gratuito de PostgreSQL de Render está ocupado por otro proyecto y no se
 
 ## Estado de publicación
 
-Preparación local validada. Todavía no hay una URL pública verificada ni smoke tests públicos. Este documento se completará con los resultados efectivos; una configuración preparada no equivale a un despliegue exitoso.
+Servicio creado: `erp-mb-demo` (`srv-db7cjsaj9qps73bubb50`), Render Free, Oregon. URL asignada: https://erp-mb-demo.onrender.com. El health check está configurado en `/health/ready`. Despliegue confirmado `live` y 99 comprobaciones HTTP públicas aprobadas: HTTPS, assets, identidad, cookies Secure/HttpOnly/SameSite Strict, CSRF/Origin, ocho perfiles, Personas/Células, asistencia histórica, Portal, IDOR, suspensión/reactivación y logout.
 
 ## Configuración preparada
 
@@ -67,7 +67,7 @@ El seed solo se ejecuta si `APP_ENV=demo` y `ALLOW_DEMO_SEED=true`. El arranque 
 
 Se preparan ocho cuentas ficticias: `demo.admin`, `demo.apostol`, `demo.oficina`, `demo.lider`, `demo.asistente`, `demo.miembro`, `demo.areas` y `demo.combinado`. Todas tienen contraseñas distintas derivadas de un secreto aleatorio; no se publican claves predeterminadas. Incluye ocho Personas marcadas DEMO, dos células, roles celulares, reuniones recientes y asistencia histórica. Asistente/Miembro no reciben liderazgo artificial: sirven para comprobar denegación. El acceso combinado integra liderazgo y una subárea de Multimedia.
 
-La primera cuenta usa Administrador General. Las claves y permisos posteriores se administran desde Usuarios con reautenticación. Desactivar `ALLOW_DEMO_SEED` y retirar `DEMO_BOOTSTRAP_SECRET` después de guardar las credenciales iniciales de manera privada. Reiniciar no restablece contraseñas. LOCAL no llama este seed y no se exportó su base.
+La primera cuenta usa Administrador General. Las claves y permisos posteriores se administran desde Usuarios con reautenticación. El bootstrap se verificó contra Neon antes de publicar. Render ya tiene `ALLOW_DEMO_SEED=false` y no recibió `DEMO_BOOTSTRAP_SECRET`; las credenciales iniciales permanecen en el archivo privado local. Reiniciar no restablece contraseñas. LOCAL no llama este seed y no se exportó su base.
 
 ### Proxy, sesiones, CSRF y health
 
@@ -75,7 +75,7 @@ El backend comprueba Host y Origin, exige HTTPS en API/páginas y mantiene CSRF.
 
 `/health/ready` comprueba PostgreSQL y devuelve únicamente `ok` o `unavailable` (503). Junto con `/health/live`, acepta las sondas HTTP internas de Render sin sesión; esta excepción no aplica a páginas/API. Configurar `/health/ready` como health check. Las cookies HTTPS mantienen `__Host-`, HttpOnly, Secure, SameSite Strict y Path=/; las sesiones persisten en PostgreSQL y tienen expiración absoluta.
 
-Logs estructurados: método, ruta, estado, duración, request ID y código seguro. Sin cuerpos, SQL, contraseñas, cookies o conexiones. Errores de API no devuelven stack. El error de bootstrap es genérico para evitar fugas; diagnosticar mediante un operador con acceso a configuración/migraciones, nunca habilitando logs de secretos.
+Logs estructurados: método, ruta, estado, duración, request ID y código seguro. Sin cuerpos, SQL, contraseñas, cookies o conexiones. Errores de API no devuelven stack. El error de bootstrap muestra únicamente fase y código seguro para evitar fugas; diagnosticar mediante un operador con acceso a configuración/migraciones, nunca habilitando logs de secretos.
 
 ## Publicación y actualización
 
@@ -85,15 +85,15 @@ Logs estructurados: método, ruta, estado, duración, request ID y código segur
 4. Esperar deploy `live`, verificar URL que Render realmente asignó y ejecutar pruebas públicas.
 5. Desactivar seed y comprobar un redeploy sin pérdida de datos/cuentas/sesiones.
 
-Una vez conectado, cada push a la rama de despliegue activa redeploy. La base y secretos permanecen; el filesystem web es efímero y no guarda datos del ERP. No se ejecuta reset ni importación de LOCAL. Los datos persisten a través de redeploy mientras exista la base. El servicio gratuito puede dormirse por inactividad; el primer acceso puede tardar. Neon Free tiene límites propios de cómputo y almacenamiento; verificar cuotas en ambos proveedores. No se utiliza la base temporal gratuita de Render.
+El repositorio se clonó por URL pública. La integración GitHub actual de Render solo autoriza otro repositorio; por ello Auto-Deploy queda en Off. Para actualizar: commit y push a `codex/render-demo`, después Dashboard → Manual Deploy → Deploy latest commit (o la herramienta de deploy de Render). Para automatizar, el titular debe autorizar el repositorio ERP-MB en la instalación GitHub de Render, seleccionarlo como Git Provider y activar On Commit. No se ampliaron permisos de GitHub durante este trabajo. La base y secretos permanecen; el filesystem web es efímero y no guarda datos del ERP. No se ejecuta reset ni importación de LOCAL. Los datos persisten a través de redeploy mientras exista la base. El servicio gratuito puede dormirse por inactividad; el primer acceso puede tardar. Neon Free tiene límites propios de cómputo y almacenamiento; verificar cuotas en ambos proveedores. No se utiliza la base temporal gratuita de Render.
 
-Rollback: volver a un commit compatible con el esquema aplicado y redeployar. No modificar checksums ni ejecutar migraciones inversas improvisadas. Un cambio destructivo futuro exige backup y restauración ensayada en una base separada. No eliminar la base para corregir un deploy.
+Rollback: volver a un commit compatible con el esquema aplicado y redeployar. No modificar checksums ni ejecutar migraciones inversas improvisadas. Se conservan los hashes históricos de dos archivos Windows mediante pares exactos auditados en `migration-checksum.mjs`: el SQL es idéntico y solo difieren CRLF/LF. Cualquier otro cambio sigue bloqueando el despliegue. Un cambio destructivo futuro exige backup y restauración ensayada en una base separada. No eliminar la base para corregir un deploy.
 
 ## Validación
 
-Antes de cambios: 94 pruebas Node ejecutadas, 93 aprobadas y un fallo de teardown (`terminating connection due to administrator command`). La base temporal se eliminaba antes de cerrar el servidor de la prueba. Se corrigió el fixture para cerrar servidores primero y hacer el cierre idempotente. Las nueve suites de navegador iniciales pasaron. La verificación específica posterior pasó 14/14; regresión final: **98/98 pruebas Node y 9/9 suites de navegador aprobadas**. `render.yaml` validado contra el esquema oficial JSON Schema 2020-12. El CLI Render no está instalado; se utilizó validación de esquema, no validación remota de capacidad/costo.
+Antes de cambios: 94 pruebas Node ejecutadas, 93 aprobadas y un fallo de teardown (`terminating connection due to administrator command`). La base temporal se eliminaba antes de cerrar el servidor de la prueba. Se corrigió el fixture para cerrar servidores primero y hacer el cierre idempotente. Las nueve suites de navegador iniciales pasaron. La verificación específica posterior pasó 14/14; regresión final: **100/100 pruebas Node y 9/9 suites de navegador aprobadas** (las dos pruebas adicionales cubren TLS de Neon y compatibilidad de checksum Windows/Linux). `render.yaml` validado contra el esquema oficial JSON Schema 2020-12. El CLI Render no está instalado; se utilizó validación de esquema, no validación remota de capacidad/costo.
 
-Pendiente tras publicación: página/assets, identidad, login/logout, cookie segura, CSRF inválido, sesión suspendida/revocada, Personas, Células, reuniones/asistencia, Portal e historial. Probar líder contra otra célula/Persona, Matriz y Administración; verificar denegación. Revisar desktop, tablet, 390 y 320 px. Comparar datos antes/después de redeploy. Ningún resultado público se da por aprobado antes de existir el servicio.
+La prueba reproducible `node scripts/smoke-demo.mjs` usa exclusivamente la URL DEMO y credenciales del archivo privado: 99 comprobaciones aprobadas. Suspende/reactiva únicamente `demo.miembro` y restaura su acceso; no cambia contraseñas ni borra datos. La revisión visual pública incluye escritorio, tablet 768 px y teléfonos 390/320 px. El entorno LOCAL responde 200 y permanece separado. La persistencia se comprueba en un segundo despliegue.
 
 Antes de producción siguen pendientes backups/restauración real, gestión externa y rotación de secretos, monitoreo/retención de logs, carga/concurrencia del entorno contratado, revisión de proxy real y operación sin dependencia del plan gratuito. No se implementan nuevas funcionalidades como parte de este despliegue.
 

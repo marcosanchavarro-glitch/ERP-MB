@@ -9,7 +9,7 @@ services:
     buildCommand: npm ci --omit=dev
     startCommand: npm run start:render
     healthCheckPath: /health/ready
-    autoDeployTrigger: commit
+    autoDeployTrigger: 'off' # Enable commit after granting Render access to ERP-MB in GitHub.
     envVars:
       - key: NODE_VERSION
         value: 24.20.0

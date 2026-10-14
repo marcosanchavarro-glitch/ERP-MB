@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 const base='https://erp-mb-demo.onrender.com';
+const range='?from='+new Date(Date.now()-28*86400000).toISOString().slice(0,10)+'&to='+new Date().toISOString().slice(0,10);
 const credentials=JSON.parse(await readFile('.local/render-demo-credentials.json','utf8'));
 let checks=0;
 function ok(value,label){assert.ok(value,label);checks++;console.log('PASS '+label);}
@@ -18,7 +19,7 @@ await publicClient.json('/api/people',401);
 await publicClient.json('/api/auth/login',403,{method:'POST',body:'{}',headers:{'X-CSRF-Token':'invalid'}});
 await publicClient.json('/api/auth/login',403,{method:'POST',body:'{}',headers:{Origin:'https://foreign.invalid'}});
 const admin=client();await admin.login('demo.admin');
-const people=await admin.json('/api/people'),cells=await admin.json('/api/cells'),users=await admin.json('/api/admin/users'),meetings=await admin.json('/api/meetings');
+const people=await admin.json('/api/people'),cells=await admin.json('/api/cells'),users=await admin.json('/api/admin/users'),meetings=await admin.json('/api/meetings'+range);
 ok(people.items.length===8&&cells.items.length===2&&users.items.length===8,'fictitious dataset counts');
 ok(meetings.items.some(m=>m.status==='RECORDED'),'historical attendance exists');
 for(const c of cells.items){await admin.json('/api/meetings/matrix/'+c.id);await admin.json('/api/cells/'+c.id+'/members');}
@@ -43,5 +44,5 @@ async function setActive(active){const d=await admin.json('/api/admin/users/'+ta
 try{await setActive(false);const s=await member.json('/api/auth/session');ok(!s.authenticated,'suspension revokes session');}finally{await setActive(true);}
 await member.login('demo.miembro');await member.json('/api/auth/logout',200,{method:'POST',body:'{}'});
 ok(!(await member.json('/api/auth/session')).authenticated,'logout ends authentication');
-await writeFile('.local/demo-redeploy-session.json',JSON.stringify({cookie:admin.cookie,counts:{people:people.items.length,cells:cells.items.length,users:users.items.length,meetings:meetings.items.length}}));
+await writeFile('.local/demo-redeploy-session.json',JSON.stringify({cookie:admin.cookie,range,counts:{people:people.items.length,cells:cells.items.length,users:users.items.length,meetings:meetings.items.length}}));
 console.log(JSON.stringify({checks,status:'PASS',base}));
