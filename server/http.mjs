@@ -1,4 +1,7 @@
 import {readFile} from 'node:fs/promises';
+import {newcomersRouter} from './newcomers/http.mjs';
+import {createOfficeService} from './office/service.mjs';
+import {officeRouter} from './office/http.mjs';
 import {branding} from './core/branding.mjs';
 import {createIdentityAdmin} from './identity/admin-service.mjs';
 import {identityAdminRouter} from './identity/admin-http.mjs';
@@ -49,6 +52,8 @@ export async function createAppServer(people,{pool,config}) {
  app.use('/api/leader/cells/:cellId/meetings/:id/actions',express.json({limit:'4mb',strict:true}));
  app.use('/api',express.json({limit:'32kb',strict:true}));
  const sessionStore=await installIdentity(app,pool,config);
+ app.use('/api/office',officeRouter(createOfficeService(pool,{timezone:config.timezone})));
+ app.use('/api/newcomers',newcomersRouter(pool));
  app.use('/api/admin/users',identityAdminRouter(createIdentityAdmin(pool)));
  app.get('/api/modules/:id/access',(req,res)=>{const node=assertModule(req.user,req.params.id);res.json({id:node.id,path:node.path,status:node.status});});
  app.use('/api/followup',followupRouter(createFollowupService(pool)));

@@ -34,6 +34,8 @@ export function createMeetingsService(pool){
   const notes=p.text(input.notes),reason=p.text(input.reason,1000);
   return run(ctx,async db=>{
    const m=await r.lock(db,id);p.access(ctx.user,'ver',m.cellId);p.version(m,input.version);
+   // Serialize changes to qualifying meetings with explicit newcomer conversion.
+   await db.query('SELECT id FROM newcomers WHERE id IN(SELECT newcomer_id FROM newcomer_attendance WHERE meeting_id=$1) ORDER BY id FOR UPDATE',[id]);
    const permission={OPEN:'cargar',SAVE:m.status==='RECORDED'?'editar':'cargar',CLOSE:'cerrar',CANCEL:'cancelar',REOPEN:'reabrir'}[input.action];p.access(ctx.user,permission,m.cellId);
    let rows=m.snapshotAt?await r.records(db,id):await r.expected(db,m.cellId,m.date);p.peopleAccess(ctx.user,rows);
    const transitions={OPEN:['SCHEDULED'],SAVE:['OPEN','RECORDED'],CLOSE:['RECORDED'],CANCEL:['SCHEDULED','OPEN','RECORDED'],REOPEN:['CLOSED']};

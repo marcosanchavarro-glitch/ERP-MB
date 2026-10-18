@@ -1,3 +1,7 @@
+import {newcomersRoute,mountNewcomers,unmountNewcomers,canLeaveNewcomers} from './newcomers/controller.js';
+import {canLeaveIntegration,unmountIntegration} from './newcomers/attendance.js';
+import {themeContext} from './theme-control.js';
+import {officeRoute,mountOffice,unmountOffice} from './office/controller.js';
 import {loadIdentity} from './branding.js';
 import {adminRoute,mountAdmin,unmountAdmin,canLeaveAdmin} from './identity-admin/controller.js';
 import {followupRoute,mountFollowup,unmountFollowup,canLeaveFollowup} from './followup/controller.js';
@@ -18,7 +22,7 @@ try{await loadIdentity();}catch(error){document.querySelector('#app').textConten
 let expanded = null, collapsed = false, mobileOpen = false;
 const app = document.querySelector('#app');
 const mobile = () => matchMedia('(max-width: 760px)').matches;
-document.documentElement.style.setProperty('--accent', identity.accent);
+// Visual accent is resolved by semantic theme tokens.
 function permittedOther(path){const paths=sessionState.user?.access?.paths||[];return Boolean(sessionState.user?.access?.allModules)||paths.some(p=>path===p.path||path.startsWith(p.path+'/')||p.path.startsWith(path+'/'));}
 function visibleNavigation(){const portal=sessionState.user?.access?.leaderPortal?[leaderNode]:[];if(sessionState.user?.access?.allModules)return [...portal,...navigation];return [...portal,...navigation.filter(n=>n.path==='/').concat(navigation.filter(n=>n.path!=='/').map(n=>({...n,children:n.children.filter(c=>permittedOther(c.path))})).filter(n=>permittedOther(n.path)||n.children.length))];}
 function afterLogin(){
@@ -37,19 +41,22 @@ function render(moveFocus = false,refreshContent = true) {
  const leader=leaderRoute(path);
  if(leader||(sessionState.user.access?.leaderPortal&&path!=='/'&&!permittedOther(path))){
   if(!refreshContent&&app.querySelector('.leader-shell'))return;
-  unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closePersonContext();closeCellContext();
-  app.innerHTML=leaderShell(sessionState.user);mobileOpen=false;document.body.classList.remove('menu-open');
+  unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closePersonContext();closeCellContext();
+  themeContext(leaderNode.id);app.innerHTML=leaderShell(sessionState.user);mobileOpen=false;document.body.classList.remove('menu-open');
   const main=app.querySelector('#main');
   if(leader)mountLeader(main,leader);else main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está entre tus accesos autorizados.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a>';
   document.title='Mi Célula · '+identity.productName;if(moveFocus)main.focus();return;
  }
+ const newRoute=newcomersRoute(path);
+ const insightRoute=officeRoute(path);
  const identityRoute=adminRoute(path);
  const allowed=path==='/'||permittedOther(path);
  const followRoute=followupRoute(path);
  const personRoute=peopleRoute(path);
  const cellRoute=cellsRoute(path);
  const meetingRoute=meetingsRoute(path);
- const route = resolveRoute(identityRoute?(identityRoute.kind==='roles'?'/administracion/roles':identityRoute.kind==='audit'?'/administracion/auditoria':'/administracion/usuarios'):followRoute?'/oficina/seguimiento':personRoute?'/oficina/personas':cellRoute?'/oficina/celulas':meetingRoute?'/oficina/asistencia':path);
+ const route = resolveRoute(newRoute?(newRoute.kind==='reception'?'/recepcion':'/oficina/nuevos'):identityRoute?(identityRoute.kind==='roles'?'/administracion/roles':identityRoute.kind==='audit'?'/administracion/auditoria':'/administracion/usuarios'):followRoute?'/oficina/seguimiento':personRoute?'/oficina/personas':cellRoute?'/oficina/celulas':meetingRoute?'/oficina/asistencia':path);
+ themeContext(route?.area.id,route?.section!==route?.area?route?.section.id:'');
  if(!refreshContent && app.querySelector('.shell')) {
   app.querySelector('.shell').className=`shell ${collapsed?'is-collapsed':''} ${mobileOpen?'nav-open':''}`;
   app.querySelector('.sidebar').innerHTML=sidebar(route,expanded,visibleNavigation());
@@ -59,7 +66,7 @@ function render(moveFocus = false,refreshContent = true) {
   app.querySelector('[data-action="toggle-nav"]').setAttribute('aria-expanded',String(mobile()?mobileOpen:!collapsed));
   return;
  }
- unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
+ unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
  app.innerHTML = `<div class="shell ${collapsed?'is-collapsed':''} ${mobileOpen?'nav-open':''}"><button class="backdrop" tabindex="-1" data-action="close" aria-label="Cerrar navegación"></button><aside class="sidebar" ${mobile()&&!mobileOpen?'inert':''}>${sidebar(route,expanded,visibleNavigation())}</aside><div class="workspace" ${mobile()&&mobileOpen?'inert':''}><header class="topbar">${topbar(route,sessionState.user)}</header><main id="main" tabindex="-1" class="content">${route ? route.section.path==='/'?home(visibleNavigation()):placeholder({...route,area:{...route.area,children:route.area.children.filter(c=>permittedOther(c.path))},section:route.section===route.area?{...route.section,children:route.section.children.filter(c=>permittedOther(c.path))}:route.section}):`${pageTitle('Navegación','No encontramos esta sección.','Podés volver al inicio y explorar las áreas del ERP.')}${buttonLink('/','Volver al inicio')}`}</main><footer><span>${escapeBrand(identity.productName)} <span class="footer-dot">·</span> ${escapeBrand(identity.organizationName)}</span><span>Unidos para servir.</span></footer></div></div>`;
  const toggle = document.querySelector('[data-action="toggle-nav"]');
  toggle.setAttribute('aria-expanded', String(mobile() ? mobileOpen : !collapsed));
@@ -67,6 +74,8 @@ function render(moveFocus = false,refreshContent = true) {
  document.querySelector('.sidebar').id = 'primary-sidebar';
  const main=document.querySelector('#main');
  if(!allowed)main.innerHTML='<h1>Acceso no disponible</h1><p>No tenés permiso para realizar esta operación.</p>';
+ else if(newRoute)mountNewcomers(main,newRoute);
+ else if(insightRoute)mountOffice(main,insightRoute);
  else if(identityRoute)mountAdmin(main,identityRoute);
  else if(followRoute)mountFollowup(main,followRoute);
  else if(personRoute)mountPeople(main,personRoute);
@@ -81,7 +90,7 @@ app.addEventListener('click', event => {
  const expand = event.target.closest('[data-expand]');
  if(expand) {expanded = expanded===expand.dataset.expand?null:expand.dataset.expand; collapsed=false; render(false,false); document.querySelector(`[data-expand="${expand.dataset.expand}"]`).focus(); return;}
  const action = event.target.closest('[data-action]')?.dataset.action;
- if(action==='logout'){if(canLeaveAdmin()&&canLeaveFollowup()&&canLeavePeople()&&canLeaveCells()&&canLeaveMeetings()&&canLeaveLeader()&&canLeaveQuick())logout().then(()=>{unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closeQuickPerson();closePersonContext();closeCellContext();app.innerHTML='';showLogin(afterLogin);}).catch(error=>window.alert(error.message));return;}
+ if(action==='logout'){if(canLeaveNewcomers()&&canLeaveIntegration()&&canLeaveAdmin()&&canLeaveFollowup()&&canLeavePeople()&&canLeaveCells()&&canLeaveMeetings()&&canLeaveLeader()&&canLeaveQuick())logout().then(()=>{unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closeQuickPerson();closePersonContext();closeCellContext();app.innerHTML='';showLogin(afterLogin);}).catch(error=>window.alert(error.message));return;}
  if(action==='toggle-nav') {if(mobile()) mobileOpen=!mobileOpen; else collapsed=!collapsed; render(false,false); document.querySelector(mobile()?'.sidebar .brand':'[data-action="toggle-nav"]').focus();}
  if(action==='close') closeMenu();
  if(event.target.closest('a[href^="#/"]') && mobileOpen) {mobileOpen=false; render(false,false);}
@@ -99,7 +108,7 @@ document.addEventListener('keydown',event=>{
 });
 let previousHash=location.hash;
 window.addEventListener('hashchange',()=>{
- if(!canLeaveAdmin()||!canLeaveFollowup()||!canLeavePeople()||!canLeaveCells()||!canLeaveMeetings()||!canLeaveLeader()||!canLeaveQuick()){history.replaceState(null,'',`${location.pathname}${location.search}${previousHash}`);return;}
+ if(!canLeaveNewcomers()||!canLeaveIntegration()||!canLeaveAdmin()||!canLeaveFollowup()||!canLeavePeople()||!canLeaveCells()||!canLeaveMeetings()||!canLeaveLeader()||!canLeaveQuick()){history.replaceState(null,'',`${location.pathname}${location.search}${previousHash}`);return;}
  previousHash=location.hash;closeQuickPerson();closePersonContext();closeCellContext();
  const path=location.hash.slice(1),route=resolveRoute(peopleRoute(path)?'/oficina/personas':cellsRoute(path)?'/oficina/celulas':meetingsRoute(path)?'/oficina/asistencia':path);
  expanded=route?.area.children.length?route.area.id:null;mobileOpen=false;render(true);window.scrollTo(0,0);

@@ -6,9 +6,12 @@ import {request} from './api.js';
 import {profileView,profileBody,historyView,loading,errorView} from './views.js';
 import {icon} from '../icons.js';
 let activeDialog=null;
+let returnPath=null;
+export const personContextReturn=()=>returnPath;
 export function closePersonContext() {activeDialog?.close();}
 export async function openPersonContext(id,trigger=document.activeElement) {
  closePersonContext();
+ returnPath=/^#\/oficina\/(cumpleanos|calidad)$/.test(location.hash)?location.hash.slice(1):null;
  const dialog=document.createElement('dialog');
  dialog.className='person-dialog';
  dialog.setAttribute('aria-label','Ficha contextual de persona');

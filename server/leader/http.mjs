@@ -13,5 +13,7 @@ export function leaderRouter(service){const router=Router(),ctx=req=>({user:req.
  router.get('/cells/:cellId/meetings/:id/status',async(req,res)=>res.json(await service.status(req.params.cellId,req.params.id,ctx(req))));
  router.get('/cells/:cellId/meetings/:id',async(req,res)=>res.json(await service.meeting(req.params.cellId,req.params.id,ctx(req))));
  router.post('/cells/:cellId/meetings/:id/actions',csrfGuard,async(req,res)=>res.json(await service.action(req.params.cellId,req.params.id,req.body,ctx(req))));
+ router.get('/cells/:cellId/meetings/:id/newcomers',async(req,res)=>res.json(await service.newcomerAttendance(req.params.cellId,req.params.id,null,ctx(req))));
+ router.post('/cells/:cellId/meetings/:id/newcomers',csrfGuard,async(req,res)=>res.json(await service.newcomerAttendance(req.params.cellId,req.params.id,req.body,ctx(req))));
  return router;
 }

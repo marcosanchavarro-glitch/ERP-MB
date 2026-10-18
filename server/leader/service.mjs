@@ -1,3 +1,4 @@
+import {createIntegrationAttendance,integrationList} from '../newcomers/attendance.mjs';
 import {indicators} from '../followup/leader.mjs';
 import {transaction} from '../db/pool.mjs';
 import {principal} from '../identity/authorization.mjs';
@@ -28,7 +29,7 @@ export function createLeaderService(pool){
  async function dashboard(cellId,ctx){return run(cellId,ctx,async(db,user,c)=>{
   const cell=(await db.query('SELECT id,"displayCode","meetingDay","meetingTime" FROM cells WHERE id=$1',[cellId])).rows[0];
   const from=addDays(weekStart(),-21),to=addDays(weekStart(),13),data=await createMeetingsService(db).list({cellId,from,to},meetingContext(c,user,cellId));
-  const meetings=data.items.map(meetingDTO).sort((a,b)=>a.date.localeCompare(b.date));return {cell:cellDTO(cell),members:await r.count(db,cellId),birthdays:await r.birthdays(db,cellId),current:meetings.find(m=>m.date>=weekStart()&&m.date<=addDays(weekStart(),6))||null,next:meetings.find(m=>m.date>addDays(weekStart(),6))||null,recent:meetings.filter(m=>m.date<weekStart()).reverse()};
+  const meetings=data.items.map(meetingDTO).sort((a,b)=>a.date.localeCompare(b.date));return {cell:cellDTO(cell),newcomers:await integrationList(db,cellId),members:await r.count(db,cellId),birthdays:await r.birthdays(db,cellId),current:meetings.find(m=>m.date>=weekStart()&&m.date<=addDays(weekStart(),6))||null,next:meetings.find(m=>m.date>addDays(weekStart(),6))||null,recent:meetings.filter(m=>m.date<weekStart()).reverse()};
  });}
  async function members(cellId,q,ctx){const pg=page(q);if(q.q!=null&&(typeof q.q!=='string'||q.q.length>100))fail('Búsqueda no válida.');return run(cellId,ctx,async(db,user)=>{const data=await r.members(db,cellId,{q:q.q||'',page:pg}),values=await indicators(db,user,cellId,data.items.map(p=>p.id));return {...data,items:data.items.map(p=>({...p,...(values[p.id]?{indicator:values[p.id]}:{})}))};});}
  async function person(cellId,id,ctx){uuid(id);return run(cellId,ctx,async(db,user,c)=>{const person=await r.person(db,cellId,id);if(!person)denied();const history=await createMeetingsService(db).person(id,{},meetingContext(c,user,cellId,[id]));const values=await indicators(db,user,cellId,[id]);return {...(values[id]?{indicator:values[id]}:{}),person:personDTO(person),cell:cellDTO((await db.query('SELECT id,"displayCode","meetingDay","meetingTime" FROM cells WHERE id=$1',[cellId])).rows[0]),attendance:history.items.slice(0,10).map(m=>({id:m.id,date:m.date,meetingStatus:m.meetingStatus,status:m.status}))};});}
@@ -40,5 +41,6 @@ export function createLeaderService(pool){
    const saved=await createMeetingsService(db).action(id,input,meetingContext(c,user,cellId,rows.map(p=>p.personId)));return meetingDTO(saved);
   });
  }
- return {entry,prepare,dashboard,members,person,history,meeting,status,action};
+ async function newcomerAttendance(cellId,id,input,ctx){return run(cellId,ctx,(db,user,c)=>input?createIntegrationAttendance(db).save(id,input,c,{leader:true,cellId}):createIntegrationAttendance(db).roster(id,c,{leader:true,cellId}));}
+ return {newcomerAttendance,entry,prepare,dashboard,members,person,history,meeting,status,action};
 }

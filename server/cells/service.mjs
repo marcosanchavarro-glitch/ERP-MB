@@ -20,13 +20,13 @@ export function createCellsService(pool){
    await r.event(db,{cellId:saved.id,summary:old?'Información de la célula actualizada.':'Célula creada.',date:saved.lastEffectiveDate,actorId:user.id});return saved;
   };return client?execute(client):run(execute);
  }
- async function move(id,input,{user,requestId}={}){
+ async function move(id,input,{user,requestId,client}={}){
   shape(input,['kind','personId','membershipId','destinationId','role','date','reason','version']);
   if(!['ASSIGN','ROLE','TRANSFER','END'].includes(input.kind))fail('Operación no válida.');uuid(id);uuid(input.personId);dateAndReason(input);
   const transfer=input.kind==='TRANSFER',perm=transfer?'celulas.transferir':'celulas.gestionar_integrantes';cellAccess(user,'celulas.ver',id);cellAccess(user,perm,id);assertPerson(requirePermission(user,'personas.ver'),input.personId);
   const dest=transfer?input.destinationId:id;if(transfer){uuid(dest);if(dest===id)fail('Elegí otra célula de destino.');cellAccess(user,'celulas.ver',dest);cellAccess(user,perm,dest);}
   if(input.kind!=='END')role(input.role);if(input.kind!=='ASSIGN')uuid(input.membershipId);
-  return run(async db=>{
+  const execute=async db=>{
    await r.lockCells(db,[id,dest]);await r.lockPeople(db,[input.personId]);const source=await r.get(db,id),target=dest===id?source:await r.get(db,dest);version(source,input.version);active(source,input.date);active(target,input.date);
    const old=await r.activeForPerson(db,input.personId);
    if(input.kind==='ASSIGN'){if(old)fail('La persona ya pertenece a una célula. Usá Transferir persona desde su célula actual.',409);const ended=await r.latestEnd(db,input.personId);if(ended&&input.date<ended)fail('La fecha se superpone con una pertenencia anterior.');}
@@ -41,7 +41,7 @@ export function createCellsService(pool){
    for(const cellId of new Set([id,dest]))await r.touch(db,cellId,input.date);
    await appendAudit(db,{actorId:user.id,action:'CELL_'+input.kind,entity:'CELL',entityId:id,changes:[{field:'membership',before:old||null,after:next}],context:{operationId,requestId,reason:input.reason||null,effectiveDate:input.date,destinationId:transfer?dest:null}});
    return {operationId,cell:await r.get(db,id)};
-  });
+  };return client?execute(client):run(execute);
  }
  async function close(id,input,{user,requestId}={}){
   shape(input,['mode','date','reason','version','destinationId','allocations']);uuid(id);dateAndReason(input);

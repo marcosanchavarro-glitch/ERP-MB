@@ -1,12 +1,13 @@
+import {themeControl,themeContext} from '../theme-control.js';
 import {identity} from '../config.js';
 import {escape as e} from '../components.js';
 import {sessionState,authRequest,refreshSession} from './session.js';
 let gate=null;
 export function showLogin(onSuccess,{expired=false}={}) {
- if(gate)return;
+ if(gate)return;themeContext();
  document.querySelector('#app').hidden=true;
  gate=document.createElement('main');gate.className='login-page';
- gate.innerHTML=`<section class="login-card">${identity.logo?`<img class="login-logo" src="${e(identity.logo)}" alt="Logo de la organización">`:""}${identity.environment==='demo'?'<p class="demo-label">DEMO · Solo datos ficticios</p>':''}<div class="eyebrow">${e(identity.organizationName)}</div><h1>${e(identity.productName)}</h1><p>${expired?'Tu sesión venció o fue revocada. Iniciá sesión para continuar.':'Ingresá con tu cuenta habilitada.'}</p><form id="login-form"><label for="login-username">Usuario</label><input id="login-username" name="username" autocomplete="username" required maxlength="100"><label for="login-password">Contraseña</label><input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="256"><p id="login-error" role="alert"></p><button class="button" type="submit">Iniciar sesión</button></form><small>Las cuentas se crean administrativamente. No hay registro público.</small></section>`;
+ gate.innerHTML=`<section class="login-card">${themeControl()}${identity.logo?`<img class="login-logo" src="${e(identity.logo)}" alt="Logo de la organización">`:""}${identity.environment==='demo'?'<p class="demo-label">DEMO · Solo datos ficticios</p>':''}<div class="eyebrow">${e(identity.organizationName)}</div><h1>${e(identity.productName)}</h1><p>${expired?'Tu sesión venció o fue revocada. Iniciá sesión para continuar.':'Ingresá con tu cuenta habilitada.'}</p><form id="login-form"><label for="login-username">Usuario</label><input id="login-username" name="username" autocomplete="username" required maxlength="100"><label for="login-password">Contraseña</label><input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="256"><p id="login-error" role="alert"></p><button class="button" type="submit">Iniciar sesión</button></form><small>Las cuentas se crean administrativamente. No hay registro público.</small></section>`;
  document.body.append(gate);gate.querySelector('input').focus();
  gate.querySelector('form').onsubmit=async event=>{
   event.preventDefault();const form=event.target,button=form.querySelector('button'),message=form.querySelector('#login-error');button.disabled=true;message.textContent='';

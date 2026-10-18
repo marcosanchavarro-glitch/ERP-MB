@@ -25,6 +25,8 @@ export const fields = fieldGroups.flatMap(group=>group.fields);
 export const fieldLabels = Object.fromEntries(fields.map(field=>[field.key,field.label]));
 // Administrative completeness, not eligibility or a judgment about the person.
 export const completenessFields = ['names','lastNames','document','birthDate','phone','email','address','locality'];
+// Recommendations preserve the existing completeness denominator; sex is an additional quality recommendation.
+export const personFieldPolicy=Object.fromEntries(fields.map(f=>[f.key,f.required?'required':completenessFields.includes(f.key)||f.key==='sex'?'recommended':'optional']));
 export function completeness(person) {
  const missing = completenessFields.filter(key=>!person[key]);
  return {percent:Math.round(100*(completenessFields.length-missing.length)/completenessFields.length),missing,complete:!missing.length};

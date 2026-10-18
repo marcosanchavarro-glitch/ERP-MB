@@ -1,4 +1,5 @@
 import {branding} from './branding.mjs';
+import {validTimezone,defaultTimezone} from '../../src/domain/calendar.js';
 export function readConfig(env=process.env) {
  const mode=env.NODE_ENV || 'development';
  if(!['development','test','production'].includes(mode))throw new Error('NODE_ENV inválido.');
@@ -12,7 +13,7 @@ export function readConfig(env=process.env) {
  if(origin.pathname!=='/'||origin.search||origin.hash||origin.username||origin.password)throw new Error('APP_ORIGIN debe contener solo esquema, host y puerto.');
  if(['true','*','1'].includes(env.TRUST_PROXY))throw new Error('TRUST_PROXY debe identificar IP/CIDR de proxies conocidos.');
  const number=(name,fallback,min=1,max=86400000)=>{const n=Number(env[name]||fallback);if(!Number.isInteger(n)||n<min||n>max)throw new Error(`${name} fuera de rango.`);return n;};
- return {mode,production,branding:branding(env),databaseUrl:env.DATABASE_URL,sessionSecret:env.SESSION_SECRET,origin:origin.origin,
+ return {mode,production,timezone:validTimezone(env.APP_TIMEZONE||defaultTimezone),branding:branding(env),databaseUrl:env.DATABASE_URL,sessionSecret:env.SESSION_SECRET,origin:origin.origin,
   port:number('PORT',5173,0,65535),host:env.HOST || (env.RENDER==='true'?'0.0.0.0':'127.0.0.1'),trustProxy:env.TRUST_PROXY || false,
   sessionTtl:number('SESSION_TTL_MS',8*60*60*1000),loginLimit:number('LOGIN_LIMIT',20),loginWindow:number('LOGIN_WINDOW_MS',15*60*1000),apiLimit:number('API_LIMIT',300),
   dbSsl:env.DB_SSL==='true',dbCa:env.DB_CA_FILE || null};

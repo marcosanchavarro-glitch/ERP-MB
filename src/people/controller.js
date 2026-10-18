@@ -1,3 +1,4 @@
+import {personContextReturn} from './context.js';
 import {loadAccountAction} from '../identity-admin/api.js';
 import {loadPersonFollowup} from '../followup/controller.js';
 import {openQuickPerson} from './quick.js';
@@ -50,7 +51,7 @@ export function mountPeople(root,route) {
  }
  async function loadProfile() {
   root.innerHTML=loading;
-  try {person=await request(`/${route.id}`);if(!active)return;root.innerHTML=`${demoNotice}<a class="back-to-matrix" href="#${basePath}">← Volver a la Matriz</a>${profileView(person,{tab})}`;loadAccountAction(root,person);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
+  try {person=await request(`/${route.id}`);if(!active)return;root.innerHTML=`${demoNotice}<a class="back-to-matrix" href="#${personContextReturn()||basePath}">← ${personContextReturn()?'Volver a la consulta':'Volver a la Matriz'}</a>${profileView(person,{tab})}`;loadAccountAction(root,person);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
   catch(error){renderError(error,loadProfile);}
  }
  async function loadForm() {

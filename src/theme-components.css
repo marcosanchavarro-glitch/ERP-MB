@@ -1,0 +1,25 @@
+/* Shared interaction and native controls; module files retain their layout. */
+input,select,textarea {color:var(--color-text-primary);background-color:var(--color-surface);accent-color:var(--color-primary)}
+input::placeholder,textarea::placeholder {color:var(--color-text-secondary);opacity:1}
+input:disabled,select:disabled,textarea:disabled {color:var(--color-text-disabled);background:var(--color-surface-subtle)}
+input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible {outline:3px solid var(--color-focus);outline-offset:3px}
+fieldset label:has(input:checked) {border-color:var(--color-primary)}
+::selection {color:var(--color-on-primary);background:var(--color-primary)}
+.button:not(.secondary):hover:not(:disabled) {background:var(--color-primary-hover)}
+.button.secondary:hover:not(:disabled) {background:var(--color-primary-soft);border-color:var(--color-primary)}
+.button:disabled {color:var(--color-text-disabled);background:var(--color-surface-subtle);border-color:var(--color-border);opacity:1}
+.nav-row.selected,.nav-children a[aria-current] {color:var(--color-primary)}
+.theme-picker {position:relative;flex-shrink:0;color:var(--color-text-primary)}
+.theme-picker summary {list-style:none;display:grid;place-items:center;width:40px;height:40px;border-radius:var(--radius-control);cursor:pointer}
+.theme-picker summary::-webkit-details-marker {display:none}
+.theme-picker summary:hover,.theme-picker[open] summary {background:var(--color-primary-soft);color:var(--color-primary)}
+.theme-popover {position:absolute;right:0;top:calc(100% + 8px);width:220px;max-width:calc(100vw - 32px);padding:16px;border:1px solid var(--color-border);border-radius:var(--radius-panel);background:var(--color-surface-elevated);box-shadow:var(--shadow-floating);z-index:40}
+.theme-popover label {display:grid;gap:8px;font-size:13px;font-weight:600;margin:0}
+.theme-popover select {width:100%;min-height:44px;font:inherit;padding:8px;border:1px solid var(--color-control-border);border-radius:var(--radius-control)}
+.theme-popover small {display:block;margin-top:10px;font-size:12px;line-height:1.5;color:var(--color-text-secondary);font-weight:400;white-space:normal}
+.login-card {position:relative}
+.login-card>.theme-picker {position:absolute;right:14px;top:14px}
+.login-card>.eyebrow {padding-right:34px}
+.leader-header>.theme-picker {margin-left:auto;margin-right:8px}
+@media(max-width:760px){.topbar-tools>.search,.topbar-tools>button[disabled]{display:none}.topbar-tools>.theme-picker summary{width:36px;min-height:44px}.topbar .context{min-width:0}.topbar .context strong{max-width:100px}.topbar-tools{flex-shrink:0}}
+@media(max-width:360px){.topbar-tools .user{display:none}.topbar .context strong{max-width:90px}.leader-header{gap:6px}.leader-header>.theme-picker{margin-right:0}.leader-brand small{max-width:135px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}

@@ -8,7 +8,7 @@ test('Áreas, estados y rutas únicas',()=>{
  const nodes=navigation.flatMap(area=>[area,...area.children]);
  assert.equal(new Set(nodes.map(n=>n.path)).size,nodes.length);
  assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length);
- for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','administracion-usuarios','administracion-roles','administracion-auditoria'].includes(node.id)?'ACTIVE':['oficina','administracion'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
+ for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','recepcion','administracion-usuarios','administracion-roles','administracion-auditoria'].includes(node.id)?'ACTIVE':['oficina','administracion'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
  assert.deepEqual(Object.keys(statuses),['PLANNED','DEVELOPMENT','ACTIVE']);
 });
 test('Todos los enlaces internos resuelven y los módulos pendientes tienen placeholder',()=>{
@@ -18,7 +18,7 @@ test('Todos los enlaces internos resuelven y los módulos pendientes tienen plac
  assert.equal(resolveRoute('/inexistente'),null);
 });
 test('Estructura prevista de Oficina, Territorio y Administración',()=>{
- assert.equal(navigation.find(n=>n.id==='oficina').children.length,10);
+ assert.equal(navigation.find(n=>n.id==='oficina').children.length,11);
  assert.equal(navigation.find(n=>n.id==='territorio').children.length,5);
  assert.equal(navigation.find(n=>n.id==='administracion').children.length,5);
 });

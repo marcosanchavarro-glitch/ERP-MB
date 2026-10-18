@@ -1,4 +1,8 @@
-# ERP Eclesiástico — Administración 0.5 + Oficina Manantial 1.5
+# ERP Eclesiástico — Administración 0.5 + Oficina Manantial 1.6
+
+[Sistema visual global: Claro, Oscuro y Sistema](docs/TEMAS-VISUALES.md). Tokens semánticos, preferencia local y base para futuras variantes por área.
+
+[Cumpleaños y Calidad de datos 1.6](docs/CUMPLEANOS-CALIDAD.md): consultas paginadas, filtros, revisión contextual y permisos. Actualizar con `db:migrate` y `db:grant-local`, luego reiniciar; se mantienen las cuentas existentes.
 
 [Preparación del entorno DEMO en Render](docs/DEPLOY-DEMO.md): monolito y PostgreSQL separado, identidad configurable y bootstrap ficticio. Despliegue gratuito: Render Free + Neon Free.
 
@@ -121,3 +125,5 @@ Verificación histórica 1.4: **69/69 pruebas Node y 7/7 suites de navegador apr
 Verificación histórica 1.5: **83/83 pruebas Node y 8/8 suites de navegador aprobadas**. Seguimiento agrega 14 pruebas de backend y una suite de navegador. No se avanzó a 1.6.
 
 Verificación final transversal 0.5: **94/94 pruebas Node y 9/9 suites de navegador aprobadas**. Sin dependencias nuevas ni avance a 1.6.
+
+Nuevos, Recepción e integración: [guía funcional y técnica](docs/NUEVOS.md).

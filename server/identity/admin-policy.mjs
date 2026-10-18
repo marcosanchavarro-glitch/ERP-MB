@@ -2,7 +2,7 @@ import {requirePermission} from './authorization.mjs';
 import {DomainError} from '../core/errors.mjs';
 import {moduleCatalog,moduleNodes} from './modules.mjs';
 import {uuid,shape,fail} from '../meetings/policy.mjs';
-export const profileNames=['Administrador General','Apóstol','Oficinista','Usuario por áreas'];
+export const profileNames=['Administrador General','Apóstol','Oficinista','Recepción','Usuario por áreas'];
 export function adminAccess(user,permission='ver'){if(!requirePermission(user,'admin.usuarios.'+permission).all)throw new DomainError(403,'No tenés permiso para realizar esta operación.');}
 export async function validateGrants(db,input){
  if(!Array.isArray(input)||input.length>200)fail('Revisá los permisos (máximo 200).');

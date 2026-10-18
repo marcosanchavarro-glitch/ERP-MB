@@ -1,0 +1,65 @@
+/* Global identity → light/dark → future area/subarea overrides → components.
+   Future overrides belong after this file and target data-theme-area/subarea.
+   Components consume semantic tokens, never area names or palette literals. */
+:root {
+  color-scheme: light;
+  --color-background: #f7f9fc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-subtle: #f1f5f9;
+  --color-surface-hover: #eaf0f8;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eff6ff;
+  --color-on-primary: #ffffff;
+  --color-text-primary: #172033;
+  --color-text-secondary: #52647c;
+  --color-text-disabled: #738197;
+  --color-border: #e2e8f0;
+  --color-control-border: #8191a7;
+  --color-focus: #2563eb;
+  --color-success: #166534;
+  --color-success-soft: #ecfdf3;
+  --color-warning: #854d0e;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #b42318;
+  --color-danger-soft: #fff1f2;
+  --color-info: #1d4ed8;
+  --color-info-soft: #eff6ff;
+  --color-overlay: #0b122066;
+  --color-shadow: #17203314;
+  --radius-control: 6px;
+  --radius-panel: 12px;
+  --shadow-floating: 0 8px 28px var(--color-shadow);
+  --accent: var(--color-primary);
+  --muted: var(--color-text-secondary);
+  --line: var(--color-border);
+}
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --color-background: #0b1220;
+  --color-surface: #111827;
+  --color-surface-elevated: #172033;
+  --color-surface-subtle: #172033;
+  --color-surface-hover: #1e2c43;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #93c5fd;
+  --color-primary-soft: #172554;
+  --color-on-primary: #071426;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #a8b6cb;
+  --color-text-disabled: #8291a8;
+  --color-border: #253247;
+  --color-control-border: #64748b;
+  --color-focus: #93c5fd;
+  --color-success: #86efac;
+  --color-success-soft: #123326;
+  --color-warning: #fcd34d;
+  --color-warning-soft: #35290f;
+  --color-danger: #fda4af;
+  --color-danger-soft: #3b1822;
+  --color-info: #93c5fd;
+  --color-info-soft: #172554;
+  --color-overlay: #030712b3;
+  --color-shadow: #00000040;
+}
