@@ -1,3 +1,4 @@
+import {appointmentsRouter} from './appointments/http.mjs';
 import {readFile} from 'node:fs/promises';
 import {newcomersRouter} from './newcomers/http.mjs';
 import {createOfficeService} from './office/service.mjs';
@@ -52,6 +53,7 @@ export async function createAppServer(people,{pool,config}) {
  app.use('/api/leader/cells/:cellId/meetings/:id/actions',express.json({limit:'4mb',strict:true}));
  app.use('/api',express.json({limit:'32kb',strict:true}));
  const sessionStore=await installIdentity(app,pool,config);
+ app.use('/api/appointments',appointmentsRouter(pool,{timezone:config.timezone}));
  app.use('/api/office',officeRouter(createOfficeService(pool,{timezone:config.timezone})));
  app.use('/api/newcomers',newcomersRouter(pool));
  app.use('/api/admin/users',identityAdminRouter(createIdentityAdmin(pool)));

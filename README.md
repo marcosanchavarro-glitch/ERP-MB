@@ -129,3 +129,5 @@ Verificación final transversal 0.5: **94/94 pruebas Node y 9/9 suites de navega
 Nuevos, Recepción e integración: [guía funcional y técnica](docs/NUEVOS.md).
 
 Dashboard de Oficina: [fuentes, permisos y validación](docs/DASHBOARD-OFICINA.md).
+
+Citas / Agenda: [modelo, permisos y operación](docs/CITAS.md).

@@ -23,6 +23,11 @@ export function createDashboardService(pool,{timezone=installationTimezone(),now
   const activity=(sql)=>events.push(`(${sql} ORDER BY at DESC,id DESC LIMIT 8)`);
   const day=bind(today);
 
+  if(scope('citas.ver').all){
+   const privateAccess=scope('citas.detalles').all,privateRead=scope('citas.privadas').all;
+   add('appointments',`SELECT jsonb_build_object('today',count(*) FILTER(WHERE date=${day}::date AND status='AGENDADA'),'next',count(*) FILTER(WHERE date>${day}::date AND status='AGENDADA'),'overdue',count(*) FILTER(WHERE date<${day}::date AND status='AGENDADA'),'followup',count(*) FILTER(WHERE followup AND ${bind(privateAccess)}::boolean AND (privacy='NORMAL' OR ${bind(privateRead)}::boolean))) FROM appointments`,d=>({id:'appointments',title:'Citas',note:'Horarios coordinados por Oficina. Sin motivos ni notas.',items:[metric('Agendadas hoy',d.today,'/oficina/citas?view=today'),metric('Próximas',d.next,'/oficina/citas?view=upcoming'),metric('Pasadas sin resolver',d.overdue,'/oficina/citas?view=past&status=AGENDADA'),...(privateAccess?[metric('Requieren seguimiento',d.followup,'/oficina/citas?view=followup')]:[])]}));
+   if(scope('citas.gestionar').all&&privateAccess)actions.push({label:'Nueva cita',path:'/oficina/citas/nueva'});
+  }
   const attendance=scope('asistencia.ver');
   if(has(attendance)){
    const w=where(attendance,'m."cellId"'),start=bind(week),time=bind(instant.toISOString());
@@ -43,7 +48,7 @@ export function createDashboardService(pool,{timezone=installationTimezone(),now
    // Match only the seven relevant month/day keys. Feb 29 uses the existing calendar helper.
    const [,end]=birthdayRange('next7',today),dates=[];
    for(let date=today;date<=end;date=calendarAdd(date,1)){dates.push({md:date.slice(5),date});if(date.slice(5)==='02-28'&&birthdayInYear('2000-02-29',Number(date.slice(0,4)))===date)dates.push({md:'02-29',date});}
-   add('birthdays',`SELECT jsonb_build_object('today',count(*) FILTER(WHERE d.date=${day}),'upcoming',count(*) FILTER(WHERE d.date<>${day})) FROM people p JOIN jsonb_to_recordset(${bind(JSON.stringify(dates))}::jsonb) AS d(md text,date text) ON to_char(p."birthDate",'MM-DD')=d.md WHERE ${where(birthdays,'p.id')} AND p.status='ACTIVA' AND p."birthDate" BETWEEN '1800-01-01'::date AND ${day}::date`,d=>({id:'birthdays',title:'Cumpleaños',note:'Personas activas. Próximos seis días, además de hoy.',items:[metric('Cumplen hoy',d.today,'/oficina/cumpleanos?view=today'),metric('En los próximos seis días',d.upcoming,'/oficina/cumpleanos?view=next7')]}));
+   add('birthdays',`SELECT jsonb_build_object('today',count(*) FILTER(WHERE d.date=${day}::text),'upcoming',count(*) FILTER(WHERE d.date<>${day}::text)) FROM people p JOIN jsonb_to_recordset(${bind(JSON.stringify(dates))}::jsonb) AS d(md text,date text) ON to_char(p."birthDate",'MM-DD')=d.md WHERE ${where(birthdays,'p.id')} AND p.status='ACTIVA' AND p."birthDate" BETWEEN '1800-01-01'::date AND ${day}::date`,d=>({id:'birthdays',title:'Cumpleaños',note:'Personas activas. Próximos seis días, además de hoy.',items:[metric('Cumplen hoy',d.today,'/oficina/cumpleanos?view=today'),metric('En los próximos seis días',d.upcoming,'/oficina/cumpleanos?view=next7')]}));
   }
   const quality=scope('personas.ver','personas.calidad'),cellQuality=scope('celulas.ver','celulas.calidad');
   if(has(quality)){
