@@ -1,3 +1,4 @@
+import {newcomerStateSql} from './state.mjs';
 import {transaction} from '../db/pool.mjs';
 import {appendAudit} from '../audit/repository.mjs';
 import {requirePermission,scopeFor} from '../identity/authorization.mjs';
@@ -37,7 +38,7 @@ export function createNewcomersService(pool){
    const n=(await db.query(id?'UPDATE newcomers SET data=$1,name_key=$2,phone_key=$3,arrival_date=$4,version=version+1,updated_at=now() WHERE id=$5 RETURNING id':'INSERT INTO newcomers(data,name_key,phone_key,arrival_date,recorded_by) VALUES($1,$2,$3,$4,$5) RETURNING id',id?[v.data,v.nameKey,v.phoneKey,arrival,id]:[v.data,v.nameKey,v.phoneKey,arrival,ctx.user.id])).rows[0];await newcomerEvent(db,n.id,id?'UPDATE':'CREATE',{data:v.data,arrivalDate:arrival,duplicateAcknowledged:input.acknowledgeDuplicates===true},ctx);return {id:n.id};});
  }
  async function list(q,ctx){read(ctx);shape(q,['q','state','page']);const page=pageNumber(q),search=text(q.q,100)||'',state=q.state||'';if(state&&!newcomerStates[state])fail('Estado inválido.');
-  const cte=`WITH filtered AS (SELECT id,data,attendances,"coffeeDate",contacted,"displayCode",arrival_date,CASE WHEN phase IN ('ARCHIVADO','INTEGRADO') THEN phase WHEN attendances>=3 AND "coffeeDate" IS NOT NULL THEN 'LISTO_PARA_ALTA' WHEN attendances>0 THEN 'EN_INTEGRACION' WHEN "cellId" IS NOT NULL THEN 'DERIVADO_CELULA' WHEN phase='EN_SEGUIMIENTO' THEN phase ELSE 'PENDIENTE_CONTACTO' END state FROM newcomer_progress WHERE position($1 in name_key)>0 OR ($2<>'' AND position($2 in phone_key)>0))`;
+  const cte=`WITH filtered AS (SELECT id,data,attendances,"coffeeDate",contacted,"displayCode",arrival_date,${newcomerStateSql} state FROM newcomer_progress WHERE position($1 in name_key)>0 OR ($2<>'' AND position($2 in phone_key)>0))`;
   const params=[normalizeText(search),normalizePhone(search)],groups=(await pool.query(cte+' SELECT state,count(*)::int n FROM filtered GROUP BY state',params)).rows,counts=Object.fromEntries(Object.keys(newcomerStates).map(k=>[k,groups.find(g=>g.state===k)?.n||0])),total=state?counts[state]:Object.values(counts).reduce((a,b)=>a+b,0);
   const items=(await pool.query(cte+` SELECT id,data->>'names' names,data->>'lastNames' AS "lastNames",data->>'phone' phone,state,attendances,"coffeeDate",contacted,"displayCode" FROM filtered WHERE ($3='' OR state=$3) ORDER BY arrival_date DESC,id LIMIT 20 OFFSET $4`,[...params,state,(page-1)*20])).rows;return {items,counts,page,pages:Math.max(1,Math.ceil(total/20)),total};
  }

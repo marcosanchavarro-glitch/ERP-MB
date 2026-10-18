@@ -1,0 +1,2 @@
+// SQL projection of integrationState; shared by the list and operational summaries.
+export const newcomerStateSql=`CASE WHEN phase IN ('ARCHIVADO','INTEGRADO') THEN phase WHEN attendances>=3 AND "coffeeDate" IS NOT NULL THEN 'LISTO_PARA_ALTA' WHEN attendances>0 THEN 'EN_INTEGRACION' WHEN "cellId" IS NOT NULL THEN 'DERIVADO_CELULA' WHEN phase='EN_SEGUIMIENTO' THEN phase ELSE 'PENDIENTE_CONTACTO' END`;

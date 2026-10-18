@@ -23,7 +23,7 @@ let expanded = null, collapsed = false, mobileOpen = false;
 const app = document.querySelector('#app');
 const mobile = () => matchMedia('(max-width: 760px)').matches;
 // Visual accent is resolved by semantic theme tokens.
-function permittedOther(path){const paths=sessionState.user?.access?.paths||[];return Boolean(sessionState.user?.access?.allModules)||paths.some(p=>path===p.path||path.startsWith(p.path+'/')||p.path.startsWith(path+'/'));}
+function permittedOther(path){path=path.split('?')[0];const paths=sessionState.user?.access?.paths||[];return Boolean(sessionState.user?.access?.allModules)||paths.some(p=>path===p.path||path.startsWith(p.path+'/')||p.path.startsWith(path+'/'));}
 function visibleNavigation(){const portal=sessionState.user?.access?.leaderPortal?[leaderNode]:[];if(sessionState.user?.access?.allModules)return [...portal,...navigation];return [...portal,...navigation.filter(n=>n.path==='/').concat(navigation.filter(n=>n.path!=='/').map(n=>({...n,children:n.children.filter(c=>permittedOther(c.path))})).filter(n=>permittedOther(n.path)||n.children.length))];}
 function afterLogin(){
  const path=location.hash.slice(1)||'/';
@@ -50,12 +50,12 @@ function render(moveFocus = false,refreshContent = true) {
  const newRoute=newcomersRoute(path);
  const insightRoute=officeRoute(path);
  const identityRoute=adminRoute(path);
- const allowed=path==='/'||permittedOther(path);
+ const allowed=path==='/'||permittedOther(path.split('?')[0]);
  const followRoute=followupRoute(path);
  const personRoute=peopleRoute(path);
  const cellRoute=cellsRoute(path);
  const meetingRoute=meetingsRoute(path);
- const route = resolveRoute(newRoute?(newRoute.kind==='reception'?'/recepcion':'/oficina/nuevos'):identityRoute?(identityRoute.kind==='roles'?'/administracion/roles':identityRoute.kind==='audit'?'/administracion/auditoria':'/administracion/usuarios'):followRoute?'/oficina/seguimiento':personRoute?'/oficina/personas':cellRoute?'/oficina/celulas':meetingRoute?'/oficina/asistencia':path);
+ const route = resolveRoute(newRoute?(newRoute.kind==='reception'?'/recepcion':'/oficina/nuevos'):insightRoute?('/oficina/'+({birthdays:'cumpleanos',quality:'calidad',dashboard:'dashboard'}[insightRoute])):identityRoute?(identityRoute.kind==='roles'?'/administracion/roles':identityRoute.kind==='audit'?'/administracion/auditoria':'/administracion/usuarios'):followRoute?'/oficina/seguimiento':personRoute?'/oficina/personas':cellRoute?'/oficina/celulas':meetingRoute?'/oficina/asistencia':path);
  themeContext(route?.area.id,route?.section!==route?.area?route?.section.id:'');
  if(!refreshContent && app.querySelector('.shell')) {
   app.querySelector('.shell').className=`shell ${collapsed?'is-collapsed':''} ${mobileOpen?'nav-open':''}`;

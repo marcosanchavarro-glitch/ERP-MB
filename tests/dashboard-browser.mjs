@@ -1,0 +1,31 @@
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+import {fixture,account,testServer} from './helpers.mjs';
+import {principal} from '../server/identity/authorization.mjs';
+import {createNewcomersService} from '../server/newcomers/service.mjs';
+import {createCellsService} from '../server/cells/service.mjs';
+import {createFollowupService} from '../server/followup/service.mjs';
+import {blankPerson} from '../src/domain/person.js';
+import {blankCell,today} from '../src/domain/cell.js';
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH||'playwright');
+const f=await fixture(),admin=await account(f),ctx={user:await principal(f.pool,admin.id)},server=await testServer(f);
+const p=await f.people.save({...blankPerson(),names:'Cumple',lastNames:'Ficticio',birthDate:'1990'+today().slice(4)},{actorId:admin.id});
+await createCellsService(f.pool).save({cell:{...blankCell(),groupCode:'D',generation:1,openedDate:today()}},ctx);
+await createNewcomersService(f.pool).save({data:{names:'Visita',lastNames:'Ficticia',notes:'SECRETO_INTERNO'},arrivalDate:today()},ctx);
+await createFollowupService(f.pool).open({personId:p.id,reason:'SECRETO_INTERNO'},ctx);
+const browser=await chromium.launch({headless:true,channel:process.env.BROWSER_CHANNEL||'msedge'}),page=await browser.newPage({reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(15000);
+const goto=path=>page.goto(server.base+'/#'+path),dashboard=async()=>{await goto('/oficina/dashboard');await page.locator('[data-widget="newcomers"]').waitFor();};
+try{
+ await goto('/oficina/dashboard');await page.getByLabel('Usuario',{exact:true}).fill(admin.username);await page.getByLabel('Contraseña',{exact:true}).fill(admin.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.locator('[data-widget="newcomers"]').waitFor();assert.equal(await page.locator('[data-widget]').count(),6);assert.ok(!(await page.locator('main').innerText()).includes('SECRETO_INTERNO'));
+ for(const theme of ['light','dark','system']){await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await page.getByLabel('Elegir tema').click();await page.getByLabel('Tema de la interfaz').selectOption(theme);await page.getByLabel('Elegir tema').click();assert.equal(await page.locator('html').getAttribute('data-theme'),theme==='light'?'light':'dark');for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'overflow '+theme+' '+width);await page.screenshot({path:`test-results/dashboard-${theme}-${width}.png`,fullPage:true,animations:'disabled'});}}
+ await page.locator('[data-widget="newcomers"]').getByRole('link',{name:/Pendientes de contacto/}).click();await page.getByRole('heading',{name:'Nuevos',exact:true}).waitFor();assert.equal(await page.locator('[name="state"]').inputValue(),'PENDIENTE_CONTACTO');await page.getByRole('link',{name:'Visita Ficticia',exact:true}).waitFor();
+ await dashboard();await page.locator('[data-widget="birthdays"]').getByRole('link',{name:/Cumplen hoy/}).click();await page.getByRole('link',{name:'Cumple Ficticio',exact:true}).waitFor();assert.equal(await page.getByLabel('Período',{exact:true}).inputValue(),'today');
+ await page.getByLabel('Edad desde',{exact:true}).fill('200');await page.getByRole('button',{name:'Aplicar filtros',exact:true}).click();await page.getByText('No hay registros para estos filtros.').waitFor();await dashboard();await page.locator('[data-widget="birthdays"]').getByRole('link',{name:/Cumplen hoy/}).click();await page.getByRole('link',{name:'Cumple Ficticio',exact:true}).waitFor();assert.equal(await page.getByLabel('Edad desde',{exact:true}).inputValue(),'');
+ await dashboard();await page.locator('[data-widget="cellQuality"]').getByRole('link').click();await page.getByRole('button',{name:'Células',exact:true}).waitFor();assert.equal(await page.getByLabel('Problema',{exact:true}).inputValue(),'missing_leader');assert.equal(await page.getByRole('button',{name:'Células',exact:true}).getAttribute('aria-pressed'),'true');
+ await dashboard();await page.locator('[data-widget="peopleQuality"]').getByRole('link',{name:/incompletas/}).click();await page.getByRole('link',{name:'Cumple Ficticio',exact:true}).waitFor();assert.equal(await page.getByLabel('Completitud',{exact:true}).inputValue(),'incomplete');
+ await dashboard();await page.locator('[data-widget="followup"]').getByRole('link',{name:/Casos abiertos/}).click();await page.getByRole('heading',{name:'Seguimiento',exact:true}).waitFor();assert.equal(await page.getByLabel('Estado del caso',{exact:true}).inputValue(),'active');await page.getByRole('link',{name:'Caso Abierto',exact:true}).waitFor();
+ await dashboard();await page.locator('[data-widget="attendance"]').getByRole('link',{name:/esta semana/}).click();await page.getByRole('heading',{name:'Asistencia semanal',exact:true}).waitFor();
+ await dashboard();await page.getByRole('region',{name:'Acciones rápidas'}).getByRole('link',{name:'Nueva Persona',exact:true}).click();await page.getByRole('heading',{name:'Nueva persona',exact:true}).waitFor();
+ await dashboard();await page.route('**/api/office/dashboard',r=>r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Error temporal de prueba'})}));await page.getByRole('button',{name:'Actualizar',exact:true}).click();await page.getByText('Error temporal de prueba').waitFor();assert.equal(await page.locator('[data-widget]').count(),0);await page.unroute('**/api/office/dashboard');await page.getByRole('button',{name:'Actualizar',exact:true}).click();await page.locator('[data-widget]').first().waitFor();
+ await f.pool.query('DELETE FROM user_roles WHERE user_id=$1',[admin.id]);await page.getByRole('button',{name:'Actualizar',exact:true}).click();await page.getByText('No tenés acceso operativo a Oficina.').waitFor();assert.equal(await page.locator('[data-widget]').count(),0);assert.deepEqual(errors,[]);console.log('Dashboard browser PASS: enlaces y filtros, acciones, permisos revocados, errores/reintento, Claro/Oscuro/Sistema y 1440/768/390/320.');
+}finally{await browser.close();await f.close();}

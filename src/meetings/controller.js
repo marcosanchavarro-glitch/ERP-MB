@@ -7,10 +7,10 @@ import {meetingRows,meetingBase,dateLabel,pager} from './views.js';
 let dirty=false,saving=false,dispose=()=>{};
 export function canLeaveMeetings(){return !saving&&(!dirty||confirm('Tenés asistencia sin guardar. ¿Querés descartarla y salir?'));}
 export function unmountMeetings(){unmountIntegration();dispose();dispose=()=>{};dirty=false;saving=false;}
-export function meetingsRoute(path){if(path===meetingBase)return {kind:'week'};const m=path.match(/^\/oficina\/asistencia\/([a-f0-9-]{36})$/);return m?{kind:'detail',id:m[1]}:null;}
+export function meetingsRoute(path){if(path.split('?')[0]===meetingBase){const week=new URLSearchParams(path.split('?')[1]||'').get('week');return {kind:'week',week:week&&/^\d{4}-\d{2}-\d{2}$/.test(week)&&Number.isFinite(Date.parse(week))?week:null};}const m=path.match(/^\/oficina\/asistencia\/([a-f0-9-]{36})$/);return m?{kind:'detail',id:m[1]}:null;}
 window.addEventListener('beforeunload',ev=>{if(dirty||saving){ev.preventDefault();ev.returnValue='';}});
 let selectedWeek=weekStart();
-export function mountMeetings(root,route){unmountMeetings();let active=true,seq=0,meeting,marks=new Map(),filter='',historyPage=1;
+export function mountMeetings(root,route){unmountMeetings();if(route.week)selectedWeek=weekStart(route.week);let active=true,seq=0,meeting,marks=new Map(),filter='',historyPage=1;
  const abort=new AbortController();dispose=()=>{active=false;seq++;abort.abort();};const on=(name,fn)=>root.addEventListener(name,fn,{signal:abort.signal});
  const err=error=>{const host=root.querySelector('[data-meeting-error]');if(host){host.textContent=error.message;host.focus();}else root.innerHTML=`<p role="alert">${e(error.message)}</p><button class="button" data-reload-meeting>Reintentar</button>`;};
  async function weekly(page=1){const current=++seq;root.innerHTML='<p>Cargando semana…</p>';try{const from=selectedWeek,to=addDays(from,6),query=new URLSearchParams({from,to,page});let data=await api('?'+query);if(data.capabilities.generar){await api('/generate',{method:'POST',body:JSON.stringify({from,to})});data=await api('?'+query);}if(!active||seq!==current)return;

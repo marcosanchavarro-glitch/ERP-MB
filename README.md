@@ -127,3 +127,5 @@ Verificación histórica 1.5: **83/83 pruebas Node y 8/8 suites de navegador apr
 Verificación final transversal 0.5: **94/94 pruebas Node y 9/9 suites de navegador aprobadas**. Sin dependencias nuevas ni avance a 1.6.
 
 Nuevos, Recepción e integración: [guía funcional y técnica](docs/NUEVOS.md).
+
+Dashboard de Oficina: [fuentes, permisos y validación](docs/DASHBOARD-OFICINA.md).

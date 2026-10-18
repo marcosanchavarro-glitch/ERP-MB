@@ -1,3 +1,4 @@
+import {createDashboardService} from './dashboard.mjs';
 import {fields,normalizeText} from '../../src/domain/person.js';
 import {birthdayInfo,birthdayRange,birthdayInRange,birthdayViews} from '../../src/domain/birthday.js';
 import {calendarToday,validTimezone} from '../../src/domain/calendar.js';
@@ -75,5 +76,5 @@ export function createOfficeService(pool,{timezone=installationTimezone(),now=()
   summary.average=summary.total?Math.round(sum/summary.total):null;
   return {items:birthday?items.slice(offset):items,total,page:q.page,pages:Math.max(1,Math.ceil(total/20)),pageSize:20,today,timezone,range,...(birthday?{missingBirthDate}:{summary,problemLabels}),cells:[...choices].map(([id,displayCode])=>({id,displayCode})).sort((a,b)=>a.displayCode.localeCompare(b.displayCode))};
  }
- return {birthdays:(q,u)=>list('birthdays',q,u),people:(q,u)=>list('people',q,u),cells:(q,u)=>list('cells',q,u)};
+ return {dashboard:createDashboardService(pool,{timezone,now}),birthdays:(q,u)=>list('birthdays',q,u),people:(q,u)=>list('people',q,u),cells:(q,u)=>list('cells',q,u)};
 }

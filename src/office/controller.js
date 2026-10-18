@@ -1,3 +1,4 @@
+import {mountDashboard} from './dashboard.js';
 import {escape as e,pageTitle} from '../components.js';
 import {personLink} from '../people/views.js';
 import {cellRoles} from '../domain/cell.js';
@@ -6,7 +7,7 @@ import {personStates,sexes} from '../domain/person.js';
 import {sessionState} from '../auth/session.js';
 const states={birthdays:{q:'',view:'today',status:'ACTIVA',sex:'',cellId:'',month:'',minAge:'',maxAge:'',page:1,scroll:0},quality:{q:'',status:'ACTIVA',cellId:'',completeness:'',problem:'all',page:1,tab:'people',scroll:0}};
 let dispose=()=>{},owner;
-export const officeRoute=path=>path==='/oficina/cumpleanos'?'birthdays':path==='/oficina/calidad'?'quality':null;
+export const officeRoute=path=>({'/oficina/cumpleanos':'birthdays','/oficina/calidad':'quality','/oficina/dashboard':'dashboard'}[path.split('?')[0]]||null);
 export function unmountOffice(){dispose();dispose=()=>{};}
 const dateLabel=value=>value?value.split('-').reverse().join('/'):'—';
 const linkCell=c=>`<a href="#/oficina/celulas/${e(c.id)}" data-cell-id="${e(c.id)}">${e(c.displayCode)}</a>`;
@@ -14,7 +15,9 @@ const cellsLabel=cells=>cells.length?cells.map(c=>`${linkCell(c)} · ${e(cellRol
 async function api(path){const r=await fetch('/api/office/'+path);const d=await r.json();if(!r.ok){if(r.status===401)window.dispatchEvent(new Event('session-expired'));throw new Error(d.message||'No pudimos cargar la consulta.');}return d;}
 export function mountOffice(root,kind){
  unmountOffice();
+ if(kind==='dashboard'){dispose=mountDashboard(root);return;}
  if(owner!==sessionState.user.id){for(const s of Object.values(states)){s.q='';s.cellId='';s.page=1;s.scroll=0;s.status='ACTIVA';}states.quality.tab='people';owner=sessionState.user.id;}
+ const initial=new URLSearchParams(location.hash.split('?')[1]||'');if(initial.size){const s=states[kind];s.page=1;s.scroll=0;s.q='';s.cellId='';if(kind==='birthdays')Object.assign(s,{sex:'',month:'',minAge:'',maxAge:''});s.status=kind==='quality'&&initial.get('tab')==='cells'?'ACTIVE':'ACTIVA';s.problem='all';s.completeness='';if(kind==='birthdays'&&birthdayViews[initial.get('view')])s.view=initial.get('view');if(kind==='quality'){s.tab=initial.get('tab')==='cells'?'cells':'people';if(['duplicates','missing_leader'].includes(initial.get('problem')))s.problem=initial.get('problem');if(initial.get('completeness')==='incomplete')s.completeness='incomplete';}}
  const state=states[kind],birthday=kind==='birthdays';let active=true,serial=0,data;
  const available=sessionState.user.access.officeQuality||{};
  if(!birthday&&!available[state.tab]){state.tab=available.people?'people':'cells';state.status=state.tab==='cells'?'ACTIVE':'ACTIVA';}
