@@ -18,6 +18,8 @@ Los códigos usan letras Unicode; Ñ1 F es válido. PostgreSQL aplica clasificac
 
 Se comparan documentos, nombres, teléfonos y combinaciones de nombre/nacimiento contra Matriz y entre filas. Nacimiento aislado nunca identifica una Persona; teléfono compartido solo advierte. Un documento real ya registrado o repetido bloquea esa fila: esta fase no lo sobrescribe. Las coincidencias ambiguas se omiten o se confirman expresamente como Personas nuevas.
 
+El resumen indica cuántas filas bloquean la confirmación. «Ver filas pendientes» las filtra y «Omitir filas pendientes» permite descartar en conjunto las que tengan errores o revisión, conservando las listas. Después se muestra el resumen recalculado y se exige la confirmación final.
+
 La previsualización no escribe tablas de negocio, auditoría ni staging. El archivo vive en memoria de la pantalla y solicitud, sin almacenamiento permanente. Un plan firmado, vinculado al usuario, vence a los 30 minutos. Cambiar mapeo/fecha/decisiones exige analizar nuevamente. El servidor verifica firma, permisos y estado de datos al confirmar.
 
 La confirmación transaccional usa Person, resolveImportCell y movimientos de Células existentes. Si falla cualquier operación, revierte Personas, Células y membresías. ImportBatch conserva metadatos, contadores y resultado; ImportRecords vincula fila, Persona, Célula, si fue creada y membresía, sin guardar celdas originales. Los eventos actuales se conservan y una auditoría de batch resume el proceso. La misma confirmación se serializa y devuelve el mismo batch ante reintentos. Un intento fallido requiere un nuevo preview para reintentar.
