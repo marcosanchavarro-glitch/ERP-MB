@@ -1,3 +1,4 @@
+import {importRouter} from './imports/http.mjs';
 import {appointmentsRouter} from './appointments/http.mjs';
 import {readFile} from 'node:fs/promises';
 import {newcomersRouter} from './newcomers/http.mjs';
@@ -51,8 +52,10 @@ export async function createAppServer(people,{pool,config}) {
  app.use('/api/cells/:id/close',express.json({limit:'1mb',strict:true}));
  app.use('/api/meetings/:id/actions',express.json({limit:'4mb',strict:true}));
  app.use('/api/leader/cells/:cellId/meetings/:id/actions',express.json({limit:'4mb',strict:true}));
+ app.use('/api/imports',express.json({limit:'12mb',strict:true}));
  app.use('/api',express.json({limit:'32kb',strict:true}));
  const sessionStore=await installIdentity(app,pool,config);
+ app.use('/api/imports',importRouter(pool,{secret:config.sessionSecret}));
  app.use('/api/appointments',appointmentsRouter(pool,{timezone:config.timezone}));
  app.use('/api/office',officeRouter(createOfficeService(pool,{timezone:config.timezone})));
  app.use('/api/newcomers',newcomersRouter(pool));

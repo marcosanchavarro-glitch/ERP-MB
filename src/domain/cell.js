@@ -31,7 +31,7 @@ export function validateCell(input){
   if(v&&f.options&&!Object.hasOwn(f.options,v))errors[f.key]='Seleccioná una opción válida.';
   if(v&&f.type==='date'&&!validDate(v))errors[f.key]='Ingresá una fecha válida, no futura, desde 1900.';
  }
- if(!/^[A-Z]$/.test(cell.groupCode||''))errors.groupCode='Usá una letra de A a Z.';
+ if(!/^\p{L}$/u.test(cell.groupCode||''))errors.groupCode='Usá una letra Unicode de grupo.';
  if(cell.meetingTime&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(cell.meetingTime))errors.meetingTime='Usá un horario válido.';
  return {cell,errors};
 }

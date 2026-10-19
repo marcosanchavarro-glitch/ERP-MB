@@ -17,7 +17,7 @@
     "db:backup": "node --env-file-if-exists=.env scripts/backup.mjs",
     "admin:revoke": "node --env-file-if-exists=.env scripts/revoke-user.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "test:browser": "node --env-file-if-exists=.env tests/browser-check.mjs && node --env-file-if-exists=.env tests/people-browser.mjs && node --env-file-if-exists=.env tests/auth-browser.mjs && node --env-file-if-exists=.env tests/cells-browser.mjs && node --env-file-if-exists=.env tests/office-workflow-browser.mjs && node --env-file-if-exists=.env tests/meetings-browser.mjs && node --env-file-if-exists=.env tests/leader-browser.mjs && node --env-file-if-exists=.env tests/followup-browser.mjs && node --env-file-if-exists=.env tests/identity-admin-browser.mjs && node --env-file-if-exists=.env tests/office-insights-browser.mjs && node --env-file-if-exists=.env tests/newcomers-browser.mjs && node --env-file-if-exists=.env tests/dashboard-browser.mjs && node --env-file-if-exists=.env tests/appointments-browser.mjs",
+    "test:browser": "node --env-file-if-exists=.env tests/browser-check.mjs && node --env-file-if-exists=.env tests/people-browser.mjs && node --env-file-if-exists=.env tests/auth-browser.mjs && node --env-file-if-exists=.env tests/cells-browser.mjs && node --env-file-if-exists=.env tests/office-workflow-browser.mjs && node --env-file-if-exists=.env tests/meetings-browser.mjs && node --env-file-if-exists=.env tests/leader-browser.mjs && node --env-file-if-exists=.env tests/followup-browser.mjs && node --env-file-if-exists=.env tests/identity-admin-browser.mjs && node --env-file-if-exists=.env tests/office-insights-browser.mjs && node --env-file-if-exists=.env tests/newcomers-browser.mjs && node --env-file-if-exists=.env tests/dashboard-browser.mjs && node --env-file-if-exists=.env tests/appointments-browser.mjs && node --env-file-if-exists=.env tests/imports-browser.mjs",
     "leader:account": "node --env-file-if-exists=.env scripts/leader-account.mjs",
     "followup:rebuild": "node --env-file-if-exists=.env scripts/rebuild-followup.mjs",
     "start:render": "node scripts/start-render.mjs",
@@ -29,13 +29,20 @@
   "dependencies": {
     "argon2": "^0.45.1",
     "connect-pg-simple": "^10.0.0",
+    "exceljs": "^4.4.0",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
     "express-session": "^1.19.0",
     "helmet": "^8.3.0",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "yauzl": "^3.4.0"
   },
   "devDependencies": {
     "embedded-postgres": "^18.4.0-beta.17"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

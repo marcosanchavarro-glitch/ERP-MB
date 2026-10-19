@@ -131,3 +131,5 @@ Nuevos, Recepción e integración: [guía funcional y técnica](docs/NUEVOS.md).
 Dashboard de Oficina: [fuentes, permisos y validación](docs/DASHBOARD-OFICINA.md).
 
 Citas / Agenda: [modelo, permisos y operación](docs/CITAS.md).
+
+Importación de Matriz: [flujo, límites y prueba controlada](docs/IMPORTADOR-MATRIZ.md).

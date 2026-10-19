@@ -9,8 +9,8 @@ export function normalizePersonSex(raw){
 }
 export function parseCellCode(raw){
  if(typeof raw!=='string')return {cell:null,error:'El código debe ser texto.'};
- const match=raw.trim().toUpperCase().match(/^([A-Z])\s*([1-9]\d{0,3})\s*([FM])$/);
- if(!match)return {cell:null,error:'Código inválido. Usá grupo A–Z, número 1–9999 y F/M (por ejemplo J1 F).'};
+ const match=raw.trim().normalize('NFC').toUpperCase().match(/^(\p{L})\s*([1-9]\d{0,3})\s*([FM])$/u);
+ if(!match)return {cell:null,error:'Código inválido. Usá una letra Unicode de grupo, número 1–9999 y F/M (por ejemplo J1 F).'};
  const cell={groupCode:match[1],generation:Number(match[2]),gender:match[3]};return {cell,code:`${cell.groupCode}${cell.generation} ${cell.gender}`,error:null};
 }
 export function sexCellWarning(personSex,cellGender){return (personSex==='HOMBRE'&&cellGender==='F')||(personSex==='MUJER'&&cellGender==='M')?'El sexo de la persona no coincide con el tipo de célula.':null;}
