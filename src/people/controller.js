@@ -1,3 +1,6 @@
+import {sessionState} from '../auth/session.js';
+import {skeleton} from '../ui/skeleton.js';
+import {loadPersonContacts} from '../office-work/contacts.js';
 import {personContextReturn} from './context.js';
 import {loadAccountAction} from '../identity-admin/api.js';
 import {loadPersonFollowup} from '../followup/controller.js';
@@ -9,6 +12,7 @@ import {icon} from '../icons.js';
 import {request} from './api.js';
 import {basePath,loading,errorView,listRows,profileView,profileBody,historyView,formView,formData,personLink} from './views.js';
 import {blankPerson,validatePerson,personStates,sexes,fields,fullName} from '../domain/person.js';
+let listOwner;
 const listState={q:'',status:'',sex:'',locality:'',completeness:'',sort:'name',direction:'asc',page:1,pageSize:20,scroll:0};
 let dirty=false,saving=false,dispose=()=>{};
 export function canLeavePeople() {return !saving && (!dirty || window.confirm('Tenés cambios sin guardar. ¿Querés descartarlos y salir?'));}
@@ -22,7 +26,7 @@ export function peopleRoute(path) {
 }
 const demoNotice='<div class="demo-notice">Entorno de demostración · Usá exclusivamente datos ficticios.</div>';
 export function mountPeople(root,route) {
- unmountPeople();
+ unmountPeople();if(listOwner!==sessionState.user?.id){Object.assign(listState,{q:'',status:'',sex:'',locality:'',completeness:'',sort:'name',direction:'asc',page:1,pageSize:20,scroll:0});listOwner=sessionState.user?.id;}
  let active=true,sequence=0,searchTimer,person,tab='summary';
  const listeners=new AbortController();
  dispose=()=>{active=false;sequence++;clearTimeout(searchTimer);listeners.abort();if(route.kind==='list')listState.scroll=window.scrollY;};
@@ -31,7 +35,7 @@ export function mountPeople(root,route) {
  async function refreshRows() {
   const current=++sequence;
   const target=root.querySelector('#people-results');if(!target)return;
-  target.setAttribute('aria-busy','true');
+  target.setAttribute('aria-busy','true');target.innerHTML=skeleton('table',{headers:['Persona','Contacto','Localidad','Estado','Ficha']});
   try {const data=await request(`?${new URLSearchParams(Object.entries(listState).filter(([key])=>key!=='scroll'))}`);if(!active||current!==sequence||!target.isConnected)return;listState.page=data.page;target.innerHTML=listRows(data);root.querySelector('#results-announcement').textContent=`${data.total} personas encontradas. Página ${data.page} de ${data.pages}.`;}
   catch(error){if(active&&current===sequence)target.innerHTML=errorView(error.message);}
   finally{if(active&&current===sequence)target.setAttribute('aria-busy','false');}
@@ -46,12 +50,12 @@ export function mountPeople(root,route) {
   }catch(error){renderError(error,loadList);}
  }
  async function loadHistory(page=1) {
-  const target=root.querySelector('[data-history-host]');if(!target)return;target.innerHTML=loading;
+  const target=root.querySelector('[data-history-host]');if(!target)return;target.innerHTML=skeleton('list');
   try {const data=await request(`/${route.id}/history?page=${page}`);if(active&&target.isConnected)target.innerHTML=historyView(data);}catch(error){if(active&&target.isConnected)target.innerHTML=errorView(error.message);}
  }
  async function loadProfile() {
-  root.innerHTML=loading;
-  try {person=await request(`/${route.id}`);if(!active)return;root.innerHTML=`${demoNotice}<a class="back-to-matrix" href="#${personContextReturn()||basePath}">← ${personContextReturn()?'Volver a la consulta':'Volver a la Matriz'}</a>${profileView(person,{tab})}`;loadAccountAction(root,person);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
+  root.innerHTML=skeleton('profile');
+  try {person=await request(`/${route.id}`);if(!active)return;root.innerHTML=`${demoNotice}<a class="back-to-matrix" href="#${personContextReturn()||basePath}">← ${personContextReturn()?'Volver a la consulta':'Volver a la Matriz'}</a>${profileView(person,{tab})}`;loadAccountAction(root,person);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='officeContacts')loadPersonContacts(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
   catch(error){renderError(error,loadProfile);}
  }
  async function loadForm() {
@@ -96,7 +100,7 @@ export function mountPeople(root,route) {
   if(action==='reload-form'&&canLeavePeople())loadForm();
   const page=event.target.closest('[data-page]');if(page){listState.page=Number(page.dataset.page);refreshRows();}
   const historyPage=event.target.closest('[data-history-page]');if(historyPage)loadHistory(historyPage.dataset.historyPage);
-  const tabButton=event.target.closest('[data-profile-tab]');if(tabButton){tab=tabButton.dataset.profileTab;root.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tabButton)));root.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
+  const tabButton=event.target.closest('[data-profile-tab]');if(tabButton){tab=tabButton.dataset.profileTab;root.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tabButton)));root.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='officeContacts')loadPersonContacts(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
  });
  on('submit',async event=>{
   if(event.target.id!=='person-form')return;event.preventDefault();if(saving)return;

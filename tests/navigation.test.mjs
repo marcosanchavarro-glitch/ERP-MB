@@ -8,7 +8,7 @@ test('Áreas, estados y rutas únicas',()=>{
  const nodes=navigation.flatMap(area=>[area,...area.children]);
  assert.equal(new Set(nodes.map(n=>n.path)).size,nodes.length);
  assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length);
- for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','oficina-importar-exportar','oficina-citas','oficina-dashboard','recepcion','administracion-usuarios','administracion-roles','administracion-auditoria'].includes(node.id)?'ACTIVE':['oficina','administracion'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
+ for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','oficina-importar-exportar','oficina-citas','oficina-dashboard','oficina-trabajo','recepcion','administracion-usuarios','administracion-roles','administracion-auditoria'].includes(node.id)?'ACTIVE':['oficina','administracion'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
  assert.deepEqual(Object.keys(statuses),['PLANNED','DEVELOPMENT','ACTIVE']);
 });
 test('Todos los enlaces internos resuelven y los módulos pendientes tienen placeholder',()=>{
@@ -18,7 +18,7 @@ test('Todos los enlaces internos resuelven y los módulos pendientes tienen plac
  assert.equal(resolveRoute('/inexistente'),null);
 });
 test('Estructura prevista de Oficina, Territorio y Administración',()=>{
- assert.equal(navigation.find(n=>n.id==='oficina').children.length,11);
+ assert.equal(navigation.find(n=>n.id==='oficina').children.length,12);
  assert.equal(navigation.find(n=>n.id==='territorio').children.length,5);
  assert.equal(navigation.find(n=>n.id==='administracion').children.length,5);
 });
@@ -39,7 +39,7 @@ test('Preferencias serializables cambian iconos de áreas y subsecciones y permi
  assert.match(placeholder({area:office,section:people}),/class="placeholder-icon"><svg[^>]+data-icon="spark"/);
  assert.match(placeholder({area:office,section:office}),/data-icon="spark"/);
  assert.equal(createNavigation().find(node=>node.id==='oficina').icon,'office');
- assert.equal(navigation.find(node=>node.id==='oficina').children[1].icon,'people');
+ assert.equal(navigation.find(node=>node.id==='oficina').children.find(node=>node.id==='oficina-personas').icon,'people');
 });
 test('Catálogo buscable, vista previa compartida y fallback seguro',()=>{
  assert.ok(searchIcons('MUSICA').some(item=>item.id==='music'));

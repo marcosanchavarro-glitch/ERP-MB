@@ -1,3 +1,4 @@
+import {skeleton} from '../ui/skeleton.js';
 import {escape as e,pageTitle} from '../components.js';
 import {newcomerFields,newcomerStates} from '../domain/newcomer.js';
 import {fields as personFields} from '../domain/person.js';
@@ -49,5 +50,5 @@ export function mountNewcomers(root,route){
   if(f.dataset.form==='guests'){const result=await api('?'+new URLSearchParams(v));if(active)root.querySelector('[data-guests-search]').innerHTML=result.items.filter(n=>!['INTEGRADO','ARCHIVADO'].includes(n.state)).map(n=>`<p>${e(n.names+' '+n.lastNames)} <button class="button secondary" type="button" data-guest="${n.id}" data-attended="false">Invitar</button></p>`).join('')||'<p>Sin resultados disponibles.</p>';}
  }catch(err){error(err);}finally{busy=false;}},{signal:abort.signal});
  root.addEventListener('click',async ev=>{const b=ev.target.closest('button');if(!b||busy)return;try{if(b.dataset.page){if(!canLeaveNewcomers())return;dirty=false;page=Number(b.dataset.page);await load();}if(b.dataset.state){state=b.dataset.state;page=1;await list();}if(b.dataset.guest){if(dirty){error(new Error('Guardá los cambios del Café antes de modificar invitados.'));return;}busy=true;await api('/coffees/'+route.id+'/guests',{newcomerId:b.dataset.guest,attended:b.dataset.attended==='true',version:data.version});await coffee();}}catch(err){error(err);}finally{busy=false;}},{signal:abort.signal});
- shell('Nuevos','<p>Cargando…</p>');load();
+ shell('Nuevos',skeleton('list'));load();
 }

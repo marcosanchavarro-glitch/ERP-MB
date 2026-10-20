@@ -1,3 +1,5 @@
+import {skeleton} from '../ui/skeleton.js';
+import {loadPersonContacts,canLeaveContacts} from '../office-work/contacts.js';
 import {loadAccountAction} from '../identity-admin/api.js';
 import {loadPersonFollowup} from '../followup/controller.js';
 import {loadPersonAttendance} from '../meetings/panels.js';
@@ -10,28 +12,29 @@ let returnPath=null;
 export const personContextReturn=()=>returnPath;
 export function closePersonContext() {activeDialog?.close();}
 export async function openPersonContext(id,trigger=document.activeElement) {
- closePersonContext();
+ if(activeDialog&&!canLeaveContacts())return;closePersonContext();
  returnPath=/^#\/oficina\/(cumpleanos|calidad)$/.test(location.hash)?location.hash.slice(1):null;
  const dialog=document.createElement('dialog');
  dialog.className='person-dialog';
  dialog.setAttribute('aria-label','Ficha contextual de persona');
- dialog.innerHTML=`<header class="context-sheet-header"><span>Consulta rápida · Ficha 360°</span><button class="icon-button" data-close-person aria-label="Cerrar ficha">${icon('close')}</button></header><div class="context-sheet-content">${loading}</div>`;
+ dialog.innerHTML=`<header class="context-sheet-header"><span>Consulta rápida · Ficha 360°</span><button class="icon-button" data-close-person aria-label="Cerrar ficha">${icon('close')}</button></header><div class="context-sheet-content">${skeleton('profile')}</div>`;
  document.body.append(dialog);activeDialog=dialog;dialog.showModal();
  document.body.classList.add('person-dialog-open');
  dialog.addEventListener('close',()=>{dialog.remove();if(activeDialog===dialog){activeDialog=null;document.body.classList.remove('person-dialog-open');if(trigger?.isConnected)trigger.focus({preventScroll:true});}},{once:true});
- dialog.querySelector('[data-close-person]').onclick=()=>dialog.close();
- dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();if(event.target.closest('[data-context-navigate]'))dialog.close();});
+ dialog.querySelector('[data-close-person]').onclick=()=>{if(canLeaveContacts())dialog.close();};
+ dialog.addEventListener('cancel',ev=>{if(!canLeaveContacts())ev.preventDefault();});
+ dialog.addEventListener('click',event=>{if(event.target===dialog&&canLeaveContacts())dialog.close();if(event.target.closest('[data-context-navigate]'))dialog.close();});
  const host=dialog.querySelector('.context-sheet-content');
  async function load() {
-  host.innerHTML=loading;
+  host.innerHTML=skeleton('profile');
   try {
    const person=await request(`/${encodeURIComponent(id)}`);
    if(!dialog.open)return;
    host.innerHTML=profileView(person,{contextual:true});loadAccountAction(host,person);
-   async function loadHistory(page=1) {const target=host.querySelector('[data-history-host]');if(!target)return;target.innerHTML=loading;try {const data=await request(`/${id}/history?page=${page}`);if(target.isConnected)target.innerHTML=historyView(data);}catch(error){if(target.isConnected)target.innerHTML=errorView(error.message);}}
+   async function loadHistory(page=1) {const target=host.querySelector('[data-history-host]');if(!target)return;target.innerHTML=skeleton('list');try {const data=await request(`/${id}/history?page=${page}`);if(target.isConnected)target.innerHTML=historyView(data);}catch(error){if(target.isConnected)target.innerHTML=errorView(error.message);}}
    host.onclick=event=>{
     const tab=event.target.closest('[data-profile-tab]');
-    if(tab){host.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tab)));host.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab.dataset.profileTab);if(tab.dataset.profileTab==='history')loadHistory();if(tab.dataset.profileTab==='cell')loadPersonCells(host,person.id);if(tab.dataset.profileTab==='attendance')loadPersonAttendance(host,person.id);if(tab.dataset.profileTab==='followup')loadPersonFollowup(host,person.id);}
+    if(tab){host.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tab)));host.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab.dataset.profileTab);if(tab.dataset.profileTab==='history')loadHistory();if(tab.dataset.profileTab==='cell')loadPersonCells(host,person.id);if(tab.dataset.profileTab==='attendance')loadPersonAttendance(host,person.id);if(tab.dataset.profileTab==='officeContacts')loadPersonContacts(host,person.id);if(tab.dataset.profileTab==='followup')loadPersonFollowup(host,person.id);}
     const page=event.target.closest('[data-history-page]');if(page)loadHistory(page.dataset.historyPage);
     if(event.target.closest('[data-people-action="retry"]'))loadHistory();
    };

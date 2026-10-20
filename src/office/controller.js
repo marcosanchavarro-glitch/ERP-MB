@@ -1,3 +1,4 @@
+import {skeleton} from '../ui/skeleton.js';
 import {mountDashboard} from './dashboard.js';
 import {escape as e,pageTitle} from '../components.js';
 import {personLink} from '../people/views.js';
@@ -35,7 +36,7 @@ export function mountOffice(root,kind){
   ${birthday?`${select('sex','Sexo',sexes)}${select('month','Mes de nacimiento',Object.fromEntries(Array.from({length:12},(_,i)=>[i+1,new Intl.DateTimeFormat('es',{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2020,i,1)))])))}<label>Edad desde<input name="minAge" type="number" min="0" max="250" value="${e(state.minAge)}"></label><label>Edad hasta<input name="maxAge" type="number" min="0" max="250" value="${e(state.maxAge)}"></label>`:select('completeness','Completitud',{complete:'Completa',incomplete:'Incompleta'})}
   ${birthday?'':select('problem','Problema',{all:'Todos',incomplete:'Ficha incompleta',complete:'Ficha completa',review:'Requiere revisión',...(!cell?{duplicates:'Posibles duplicados'}:{}),...(data?.problemLabels||{})},null)}
   <button class="button" type="submit">Aplicar filtros</button><button class="button secondary" type="button" data-reset>Limpiar</button></form>
-  <div data-insight-summary></div><div data-insight-results aria-live="polite">Cargando…</div>
+  <div data-insight-summary></div><div data-insight-results aria-live="polite">${skeleton('list')}</div>
   <p class="matrix-help">${birthday?'29/02: se considera el 28/02 en años no bisiestos. Próximos 7 días incluye hoy. Semana de lunes a domingo.':'Completitud administrativa, no valoración de la persona. Los teléfonos pueden compartirse entre familiares. Las fichas inactivas se consultan por separado mediante Estado.'}</p>`;
  }
  function render(){const cell=state.tab==='cells'&&!birthday;const target=root.querySelector('[data-insight-results]');
@@ -46,9 +47,9 @@ export function mountOffice(root,kind){
   const cellSelect=root.querySelector('[name="cellId"]');if(cellSelect)cellSelect.innerHTML='<option value="">Todas</option>'+data.cells.map(c=>`<option value="${e(c.id)}" ${state.cellId===c.id?'selected':''}>${e(c.displayCode)}</option>`).join('')+(state.cellId&&!data.cells.some(c=>c.id===state.cellId)?`<option selected value="${e(state.cellId)}">Célula seleccionada</option>`:'');
   const problem=root.querySelector('[name="problem"]');if(problem){const selected=state.problem;for(const [value,label]of Object.entries(data.problemLabels))if(![...problem.options].some(o=>o.value===value))problem.add(new Option(label,value));problem.value=selected;}
  }
- async function refresh(){const seq=++serial;root.querySelector('[data-insight-results]').setAttribute('aria-busy','true');
+ async function refresh(){const seq=++serial;root.querySelector('[data-insight-summary]').innerHTML=skeleton('cards',{rows:2});root.querySelector('[data-insight-results]').setAttribute('aria-busy','true');root.querySelector('[data-insight-results]').innerHTML=skeleton('list');
   try{const keys=birthday?['q','status','cellId','sex','month','minAge','maxAge','view','page']:['q','status','cellId','completeness','problem','page'];const query=Object.fromEntries(keys.map(key=>[key,state[key]??'']));const result=await api((birthday?'birthdays':'quality/'+state.tab)+'?'+new URLSearchParams(query));if(!active||seq!==serial)return;data=result;render();}
-  catch(err){if(active&&seq===serial)root.querySelector('[data-insight-results]').innerHTML=`<p role="alert">${e(err.message)}</p><button class="button secondary" data-retry>Reintentar</button>`;}
+  catch(err){if(active&&seq===serial){root.querySelector('[data-insight-summary]').replaceChildren();root.querySelector('[data-insight-results]').innerHTML=`<p role="alert">${e(err.message)}</p><button class="button secondary" data-retry>Reintentar</button>`;}}
   finally{if(active&&seq===serial)root.querySelector('[data-insight-results]').removeAttribute('aria-busy');}
  }
  on('submit',ev=>{ev.preventDefault();Object.assign(state,Object.fromEntries(new FormData(ev.target)));state.page=1;refresh();});

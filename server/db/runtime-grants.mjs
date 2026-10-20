@@ -17,6 +17,10 @@ export async function grantRuntime(pool,role){
  GRANT SELECT,INSERT ON appointment_events TO ${role};
  GRANT SELECT ON newcomer_progress TO ${role};
  GRANT SELECT,INSERT ON import_batches,import_records TO ${role};
+ GRANT SELECT,INSERT,UPDATE ON office_worker_settings,office_contacts TO ${role};
+ GRANT SELECT,INSERT,UPDATE,DELETE ON office_contact_claims TO ${role};
+ GRANT SELECT,INSERT ON office_contact_revisions TO ${role};
+ GRANT SELECT ON meeting_participation TO ${role};
  GRANT INSERT ON audit_events TO ${role};
  GRANT SELECT,INSERT,UPDATE ON users TO ${role};
  GRANT SELECT ON roles,permissions,role_permissions,identity_audit TO ${role};

@@ -1,3 +1,4 @@
+import {officeWorkRouter} from './office-work/http.mjs';
 import {importRouter} from './imports/http.mjs';
 import {appointmentsRouter} from './appointments/http.mjs';
 import {readFile} from 'node:fs/promises';
@@ -57,6 +58,7 @@ export async function createAppServer(people,{pool,config}) {
  const sessionStore=await installIdentity(app,pool,config);
  app.use('/api/imports',importRouter(pool,{secret:config.sessionSecret}));
  app.use('/api/appointments',appointmentsRouter(pool,{timezone:config.timezone}));
+ app.use('/api/office-work',officeWorkRouter(pool,{timezone:config.timezone}));
  app.use('/api/office',officeRouter(createOfficeService(pool,{timezone:config.timezone})));
  app.use('/api/newcomers',newcomersRouter(pool));
  app.use('/api/admin/users',identityAdminRouter(createIdentityAdmin(pool)));

@@ -2,7 +2,7 @@ import {completeness,fields,personFieldPolicy,fieldLabels,validatePerson} from '
 import {cellCompletion} from '../../src/domain/cell.js';
 export const problemLabels={
  ...Object.fromEntries(fields.filter(f=>personFieldPolicy[f.key]!=='optional').map(f=>['missing_'+f.key,'Sin '+f.label.toLowerCase()])),
- invalid:'Datos inválidos',duplicate_document:'Posible duplicado: documento',duplicate_phone:'Teléfono compartido: revisar',duplicate_name:'Posible duplicado: nombre y apellido',memberships:'Membresías vigentes incompatibles',sex_cell:'Sexo y célula inconsistentes',active_user:'Cuenta activa vinculada a persona inactiva',
+ reported_wrong_phone:'Número incorrecto reportado por Oficina',invalid:'Datos inválidos',duplicate_document:'Posible duplicado: documento',duplicate_phone:'Teléfono compartido: revisar',duplicate_name:'Posible duplicado: nombre y apellido',memberships:'Membresías vigentes incompatibles',sex_cell:'Sexo y célula inconsistentes',active_user:'Cuenta activa vinculada a persona inactiva',
  missing_openedDate:'Sin fecha de apertura',missing_meetingDay:'Sin día de reunión',missing_meetingTime:'Sin horario',missing_leader:'Sin líder vigente'
 };
 export function personQuality(p,today){
@@ -12,6 +12,7 @@ export function personQuality(p,today){
  const invalid=Object.entries(validatePerson(input,today).errors).filter(([key])=>Boolean(p[key]));
  if(invalid.length)problems.push({code:'invalid',label:'Revisar '+invalid.map(([key])=>fieldLabels[key]||key).join(', '),severity:'error'});
  for(const key of ['document','phone','name'])if(Number(p['duplicate_'+key])>1)add('duplicate_'+key);
+ if(p.reportedWrongPhone)add('reported_wrong_phone');
  if(p.membershipCount>1)add('memberships');
  if(p.cells.some(c=>p.sex&&c.gender!==(p.sex==='MUJER'?'F':'M')))add('sex_cell');
  if(p.activeUser&&p.status==='INACTIVA')add('active_user');

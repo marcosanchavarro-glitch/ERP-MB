@@ -77,7 +77,7 @@ export function createMeetingsService(pool){
  async function matrix(cellId,q,ctx){p.uuid(cellId);p.access(ctx.user,'ver',cellId);const ps=requirePermission(ctx.user,'personas.ver'),{from,to}=p.range(q),page=p.page(q);
   const meetings=(await pool.query('SELECT * FROM cell_meetings WHERE "cellId"=$1 AND date BETWEEN $2 AND $3 ORDER BY date,id',[cellId,from,to])).rows;
   // Live temporal preview before opening; captured participants afterwards. Constant query count.
-  const base=`WITH eligible AS (SELECT a."personId",m.id AS "meetingId",a.status FROM cell_meetings m JOIN meeting_attendance a ON a."meetingId"=m.id WHERE m.id=ANY($1::uuid[]) AND m."snapshotAt" IS NOT NULL UNION SELECT cm."personId",m.id,NULL FROM cell_meetings m JOIN cell_memberships cm ON cm."cellId"=m."cellId" AND cm."startDate"<=m.date AND (cm."endDate" IS NULL OR cm."endDate">m.date) WHERE m.id=ANY($1::uuid[]) AND m."snapshotAt" IS NULL),visible AS (SELECT * FROM eligible WHERE $2 OR "personId"=ANY($3::uuid[]))`;
+  const base=`WITH visible AS (SELECT person_id AS "personId",meeting_id AS "meetingId",attendance_status AS status FROM meeting_participation WHERE meeting_id=ANY($1::uuid[]) AND ($2 OR person_id=ANY($3::uuid[])))`;
   const v=[meetings.map(m=>m.id),ps.all,ps.ids];const total=Number((await pool.query(base+' SELECT count(DISTINCT "personId") AS n FROM visible',v)).rows[0].n);
   const rows=(await pool.query(base+` SELECT p.id,p.names,p."lastNames",jsonb_agg(jsonb_build_object('meetingId',v."meetingId",'status',v.status)) AS records FROM visible v JOIN people p ON p.id=v."personId" GROUP BY p.id ORDER BY p."sortName",p.id LIMIT 50 OFFSET $4`,[...v,(page-1)*50])).rows;
   return {meetings,items:rows,page,pages:Math.max(1,Math.ceil(total/50)),total};
