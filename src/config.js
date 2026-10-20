@@ -17,7 +17,7 @@ const defaultNavigation = [
   section('formacion','Formación','book','Espacios para aprender y crecer.', [['adn','Escuela de ADN','book']]),
   section('tesoreria','Tesorería','wallet','Administración de los recursos de la iglesia.'),
   section('territorio','Territorio','map','La comunidad y su presencia en el territorio.', [['general','Vista general','panel'],['mapa','Mapa de células','map'],['cobertura','Cobertura','map'],['evangelismo','Evangelismo','people'],['iglesias',identity.churchesName,'office']]),
-  section('administracion','Administración','settings','Organización y configuración del ERP.', [['usuarios','Usuarios','people'],['roles','Roles y permisos','settings'],['areas','Áreas','layers'],['configuracion','Configuración','settings'],['auditoria','Auditoría general','search']])
+  section('administracion','Administración','settings','Organización y configuración del ERP.', [['usuarios','Usuarios','people'],['roles','Perfiles de acceso','settings'],['areas','Áreas','layers'],['configuracion','Configuración','settings'],['auditoria','Auditoría general','search']])
 ];
 // Future stored visual preferences: a plain JSON map of module ID -> icon ID.
 // Omit a module's key to restore its configured default. No persistence or editor in 0.1.

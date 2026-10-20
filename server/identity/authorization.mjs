@@ -21,5 +21,5 @@ export function requirePermission(user,permission) {
 export function assertPerson(scope,id) {if(!scope.all&&!scope.ids.includes(id))throw new DomainError(404,'No encontramos a esta persona.');}
 export function capabilities(user,id) {
  const allowed=permission=>{const scope=scopeFor(user,permission);return scope.all||(Boolean(id)&&scope.ids.includes(id));};
- return {create:scopeFor(user,'personas.crear').all,edit:allowed('personas.editar'),history:allowed('personas.historial'),account:scopeFor(user,'admin.usuarios.ver').all};
+ return {create:scopeFor(user,'personas.crear').all,edit:allowed('personas.editar'),history:allowed('personas.historial'),account:scopeFor(user,'admin.usuarios.ver').all,cell:scopeFor(user,'celulas.ver').all||scopeFor(user,'celulas.ver').ids.length>0,attendance:scopeFor(user,'asistencia.ver').all||scopeFor(user,'asistencia.ver').ids.length>0,followup:allowed('seguimiento.ver')};
 }

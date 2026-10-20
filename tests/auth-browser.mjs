@@ -21,7 +21,7 @@ try {
  await page.getByRole('button',{name:'Guardar persona',exact:true}).click();await page.getByRole('heading',{name:'Borrador Demo Recuperado',exact:true}).waitFor();
  await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();await page.locator('#login-form').waitFor();
  assert.equal(await page.locator('.profile-body').count(),0);
- await login(denied);await page.getByText('No tenés permiso para realizar esta operación.',{exact:true}).waitFor();
+ await login(denied);await page.getByText('Esta sección no está disponible.',{exact:true}).waitFor();
  assert.equal(await page.locator('.people-table').count(),0);assert.deepEqual(errors,[]);
  console.log('Login responsive, contraseña incorrecta, cookies HttpOnly, sesión revocada, conservación de borrador, logout y acceso denegado: PASS');
 }finally{await browser.close();await s.close();await f.close();}

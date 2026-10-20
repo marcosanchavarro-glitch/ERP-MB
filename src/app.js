@@ -19,7 +19,7 @@ import {installCellContext,closeCellContext} from './cells/person-panel.js';
 import {sessionState,refreshSession} from './auth/session.js';
 import {showLogin,logout} from './auth/ui.js';
 import {identity, resolveRoute} from './config.js';
-import {escape as escapeBrand,sidebar, topbar, home, placeholder, pageTitle, buttonLink, officeLanding} from './components.js';
+import {escape as escapeBrand,sidebar, topbar, home, placeholder, pageTitle, buttonLink} from './components.js';
 import {peopleRoute,mountPeople,unmountPeople,canLeavePeople} from './people/controller.js';
 import {installPersonContext,closePersonContext} from './people/context.js';
 try{await loadIdentity();}catch(error){document.querySelector('#app').textContent='No pudimos cargar la configuración. Recargá la página para reintentar.';throw error;}
@@ -27,8 +27,8 @@ let expanded = null, collapsed = false, mobileOpen = false;
 const app = document.querySelector('#app');
 const mobile = () => matchMedia('(max-width: 760px)').matches;
 // Visual accent is resolved by semantic theme tokens.
-function permittedOther(path){path=path.split('?')[0];const paths=sessionState.user?.access?.paths||[];return Boolean(sessionState.user?.access?.allModules)||paths.some(p=>path===p.path||path.startsWith(p.path+'/')||p.path.startsWith(path+'/'));}
-function visibleNavigation(){const portal=sessionState.user?.access?.leaderPortal?[leaderNode]:[];if(sessionState.user?.access?.allModules)return [...portal,...navigation];return [...portal,...navigation.filter(n=>n.path==='/').concat(navigation.filter(n=>n.path!=='/').map(n=>({...n,children:n.children.filter(c=>permittedOther(c.path))})).filter(n=>permittedOther(n.path)||n.children.length))];}
+function permittedOther(path){path=path.split('?')[0];const paths=sessionState.user?.access?.paths||[];return paths.some(p=>path===p.path||path.startsWith(p.path+'/')&&!navigation.some(area=>area.path===p.path)||p.path.startsWith(path+'/'));}
+function visibleNavigation(){const portal=sessionState.user?.access?.leaderPortal?[leaderNode]:[];return [...portal,...navigation.filter(n=>n.path==='/').concat(navigation.filter(n=>n.path!=='/').map(n=>({...n,children:n.children.filter(c=>permittedOther(c.path))})).filter(n=>permittedOther(n.path)||n.children.length))];}
 function afterLogin(){
  const path=location.hash.slice(1)||'/';
  if(sessionState.user.access?.leaderPortal&&!leaderRoute(path)&&!permittedOther(path)&&!(path==='/'&&sessionState.user.access.portalLanding===false)){
@@ -48,7 +48,7 @@ function render(moveFocus = false,refreshContent = true) {
   unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closePersonContext();closeCellContext();
   themeContext(leaderNode.id);if(app.querySelector('.leader-shell')?.dataset.sessionUser!==sessionState.user.id)app.innerHTML=leaderShell(sessionState.user);app.querySelector('.leader-shell').dataset.sessionUser=sessionState.user.id;const previousMain=app.querySelector('#main');previousMain.replaceWith(previousMain.cloneNode(false));mobileOpen=false;document.body.classList.remove('menu-open');
   const main=app.querySelector('#main');
-  if(leader)mountLeader(main,leader);else main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está entre tus accesos autorizados.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a>';
+  if(leader)mountLeader(main,leader);else main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a>';
   document.title='Mi Célula · '+identity.productName;if(moveFocus)main.focus();return;
  }
  const work=workRoute(path);
@@ -86,7 +86,7 @@ function render(moveFocus = false,refreshContent = true) {
  toggle.setAttribute('aria-controls', 'primary-sidebar');
  document.querySelector('.sidebar').id = 'primary-sidebar';
  const main=document.querySelector('#main');
- if(!allowed)main.innerHTML='<h1>Acceso no disponible</h1><p>No tenés permiso para realizar esta operación.</p>';
+ if(!allowed)main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p>';
  else if(work)mountWork(main,work);
  else if(path==='/oficina'&&sessionState.user.access?.officeWork?.['contactos.ver'])mountWork(main,{kind:'personal',search:''});
  else if(matrixImport)mountImport(main,matrixImport);
@@ -98,7 +98,7 @@ function render(moveFocus = false,refreshContent = true) {
  else if(personRoute)mountPeople(main,personRoute);
  else if(cellRoute)mountCells(main,cellRoute);
  else if(meetingRoute)mountMeetings(main,meetingRoute);
- else if(route?.section.id==='oficina')main.innerHTML=!sessionState.user.access?.allModules?`${pageTitle('MIS ACCESOS','Oficina Manantial','Elegí una herramienta autorizada.')}<div class="cell-actions">${sessionState.user.access.paths.filter(p=>p.path.startsWith('/oficina/')).map(p=>buttonLink(p.path,p.label)).join('')}</div>`:officeLanding(route.area);
+ else if(route?.section.id==='oficina')main.innerHTML=`${pageTitle('MI TRABAJO','Oficina Manantial','Elegí una herramienta para comenzar.')}<div class="cell-actions">${sessionState.user.access.paths.filter(p=>p.path.startsWith('/oficina/')).map(p=>buttonLink(p.path,p.label)).join('')}</div>`;
  document.title = `${route?.section.name || 'Sección no encontrada'} · ${identity.productName}`;
  document.body.classList.toggle('menu-open', mobile() && mobileOpen);
  if(moveFocus) document.querySelector('#main').focus();
