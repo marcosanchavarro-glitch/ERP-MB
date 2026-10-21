@@ -25,6 +25,7 @@ import {installPersonContext,closePersonContext} from './people/context.js';
 try{await loadIdentity();}catch(error){document.querySelector('#app').textContent='No pudimos cargar la configuración. Recargá la página para reintentar.';throw error;}
 let expanded = null, collapsed = false, mobileOpen = false;
 const app = document.querySelector('#app');
+document.querySelector('.skip-link')?.addEventListener('click',event=>{event.preventDefault();document.querySelector('#main')?.focus();});
 const mobile = () => matchMedia('(max-width: 760px)').matches;
 // Visual accent is resolved by semantic theme tokens.
 function permittedOther(path){path=path.split('?')[0];const paths=sessionState.user?.access?.paths||[];return paths.some(p=>path===p.path||path.startsWith(p.path+'/')&&!navigation.some(area=>area.path===p.path)||p.path.startsWith(path+'/'));}
@@ -82,6 +83,7 @@ function render(moveFocus = false,refreshContent = true) {
  main.className=leaderContext?'content leader-main':'content';
  if(leaderContext){if(leader)mountLeader(main,leader);else main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a>';}
  else if(!allowed)main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p>';
+ else if(path==='/'&&main.querySelector('[data-home-work]'))mountOffice(main.querySelector('[data-home-work]'),'home',{omitPaths:[...main.querySelectorAll('.halo-portal')].map(a=>a.getAttribute('href').slice(1))});
  else if(work)mountWork(main,work);
  else if(path==='/oficina'&&sessionState.user.access?.officeWork?.['contactos.ver'])mountWork(main,{kind:'personal',search:''});
  else if(matrixImport)mountImport(main,matrixImport);

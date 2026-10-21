@@ -2,6 +2,7 @@
    Operational modules retain their layouts, density and interactions. */
 :root {font-size:16px;font-family:var(--font-body)}
 body {font-size:var(--type-body);line-height:1.5}
+.skip-link:not(:focus) {clip-path:inset(50%);width:1px;height:1px;padding:0;overflow:hidden}
 button,input,select,textarea {font-family:var(--font-body)}
 .halo-surface-base {background:var(--surface-base)}
 .halo-surface-soft {background:var(--surface-soft);box-shadow:var(--shadow-soft)}
@@ -42,18 +43,14 @@ input,select,textarea {border-radius:var(--radius-control)}
 .search {border-radius:var(--radius-control);background:var(--color-surface);font-size:var(--type-micro)}
 .content {padding-top:2rem}
 footer {font-size:var(--type-micro)}
-/* Inicio: editorial hierarchy, a single feature surface, then useful links. */
+/* Inicio is a compact workspace; expressive geometry stays secondary to tools. */
 .halo-home {max-width:1180px;margin-inline:auto}
-.halo-home .welcome {display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);padding:clamp(1.5rem,3vw,3rem);border-radius:var(--radius-panel);min-height:390px;background:var(--surface-feature);gap:1.5rem}
-.halo-welcome-copy {min-width:0;position:relative;z-index:1;align-self:center}
-.halo-welcome-copy .eyebrow {color:var(--color-text-primary)}
-.halo-welcome-copy h1 {font:650 var(--type-display)/.92 var(--font-display);font-stretch:75%;letter-spacing:-.055em;margin:1.625rem 0 1.375rem;overflow-wrap:anywhere;max-width:12ch}
-.halo-intro {font-size:var(--type-body);line-height:1.65;margin:0;color:var(--color-text-primary);max-width:30ch}
-.halo-home .welcome-identity {margin-top:2rem;padding-top:1rem;border-top:1px solid var(--color-control-border);max-width:23rem}
-.halo-home .welcome-identity span:not(.identity-symbol) {font-size:var(--type-body-small);font-weight:600}
-.halo-home .welcome-identity strong {font-size:var(--type-body-small);margin-top:.125rem;color:var(--color-text-primary)}
-.halo-welcome-art {display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;position:relative}
-.halo-welcome-art p {font:500 var(--type-micro)/1.8 var(--font-data);letter-spacing:.08em;color:var(--color-text-primary);align-self:flex-end;margin:1rem 0 0}
+.halo-home .welcome {display:grid;grid-template-columns:minmax(0,1fr) 160px;align-items:center;padding:1.25rem 0;min-height:0;gap:1.5rem;background:transparent;border:0;box-shadow:none}
+.halo-welcome-copy {min-width:0}
+.halo-welcome-copy h1 {font:600 clamp(2.25rem,4.4vw,4.25rem)/1.05 var(--font-display);font-stretch:80%;letter-spacing:-.045em;margin:0 0 .5rem;overflow-wrap:anywhere}
+.halo-intro {font-size:var(--type-body-small);color:var(--color-text-secondary);margin:0}
+.halo-welcome-art {display:grid;place-items:center;min-width:0}
+.halo-welcome-art .halo-orbit {width:120px}
 .halo-orbit {position:relative;width:min(100%,330px);aspect-ratio:1;border:1px solid color-mix(in srgb,var(--halo-earth) 35%,transparent);border-radius:50%;display:grid;place-items:center}
 .halo-orbit i {position:absolute;inset:11%;border:1px solid color-mix(in srgb,var(--halo-earth) 32%,transparent);border-radius:50%}
 .halo-orbit i:nth-child(2) {inset:23%}
@@ -63,28 +60,30 @@ footer {font-size:var(--type-micro)}
 .halo-orbit::after {content:'';position:absolute;top:23%;right:17%;width:9px;height:9px;background:var(--halo-earth);border-radius:50%}
 :root[data-theme=dark] .halo-orbit,:root[data-theme=dark] .halo-orbit i,:root[data-theme=dark] .halo-orbit::before {border-color:color-mix(in srgb,var(--halo-sky) 35%,transparent)}
 :root[data-theme=dark] .halo-orbit::after {background:var(--halo-sky)}
-.home-work {display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:2rem;padding:2.5rem 0;border-bottom:1px solid var(--color-border)}
-.home-work-heading h2 {font-size:clamp(1.5rem,2.5vw,2rem);line-height:1.15;font-weight:550;letter-spacing:-.05em;margin:.625rem 0}
-.home-work-heading p {color:var(--color-text-secondary);font-size:var(--type-body-small);margin:0}
-.home-tools {display:grid;grid-template-columns:1fr 1fr;gap:0 1.5rem;align-content:start}
-.home-tool {display:flex;align-items:center;gap:.625rem;min-width:0;min-height:64px;border-bottom:1px solid var(--color-border);font-size:var(--type-body-small);line-height:1.4;padding:.75rem 0}
-.home-tool>span:not(.home-tool-number) {flex:1;min-width:0;overflow-wrap:anywhere}
-.home-tool-number {color:var(--color-text-secondary)}
-.home-tool>.icon {width:18px;height:18px;color:var(--color-primary)}
-.home-tool>.icon:last-child {width:15px;height:15px}
-.home-tool:hover {color:var(--color-primary)}
-.home-tool:hover>span:not(.home-tool-number) {text-decoration:underline;text-underline-offset:4px}
-.halo-home .directory {margin-top:2.25rem}
-.halo-home .section-heading {align-items:flex-end;margin-bottom:1.25rem}
-.halo-home .section-heading h2 {font-size:clamp(1.375rem,2.5vw,1.75rem);margin:.5rem 0 0}
-.halo-home .area-grid {background:transparent;border-radius:0;padding:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 2rem}
-.halo-home .area-item {border-bottom:1px solid var(--color-border);padding:1.25rem 0;align-items:flex-start;min-height:116px}
-.halo-home .area-icon {border:1px solid var(--color-border);border-radius:50%;background:var(--color-surface);width:42px;height:42px;color:var(--color-text-primary)}
-.halo-home .area-copy h3 {font-size:var(--type-body);font-weight:600;letter-spacing:-.025em;margin:.125rem 0 .375rem}
-.halo-home .area-copy p {font-size:var(--type-body-small);min-height:0;max-width:34ch;line-height:1.6}
-.halo-home .area-status {font:400 var(--type-micro)/1.5 var(--font-data);margin-top:.625rem}
-.halo-home .area-arrow {display:block;margin-top:.625rem}
-.home-empty {font-size:var(--type-body);padding-block:1.5rem;color:var(--color-text-secondary)}
+ .home-empty {font-size:var(--type-body-small);color:var(--color-text-secondary)}
+.home-area {margin-top:1.25rem;min-width:0}
+.home-area h3 {font-size:var(--type-body);font-weight:550;margin:0 0 .75rem}
+.home-more {margin-top:.5rem}
+.home-more summary {cursor:pointer;min-height:44px;padding:.75rem 0;font-size:var(--type-body-small);color:var(--color-primary)}
+.home-more summary:focus-visible {outline:3px solid var(--color-focus);outline-offset:3px}
+.home-more summary span {color:var(--color-text-secondary)}
+.home-operations {margin-top:.75rem}
+.home-operations .dashboard-toolbar {gap:.75rem;margin-bottom:.75rem}
+.home-operations .dashboard-toolbar h2 {font-size:var(--type-section-title);margin:0}
+.home-operations .dashboard-toolbar p {margin:0 auto 0 0;font-size:var(--type-micro)}
+.home-operations .dashboard-grid {grid-template-columns:repeat(3,minmax(0,1fr))}
+.home-operations .dashboard-card {padding:1rem;background:var(--surface-base)}
+.home-operations .dashboard-card h2 {font-size:var(--type-body);margin-bottom:.5rem}
+.home-operations .dashboard-pending {gap:.25rem}
+.home-operations .dashboard-pending a {padding:.5rem;background:transparent;border-bottom:1px solid var(--color-border);border-radius:0}
+.home-operations .dashboard-pending strong {font-size:1.25rem}
+.home-operations .dashboard-pending span {font-size:var(--type-body-small)}
+.home-operations .dashboard-actions {margin:.5rem 0 1rem}
+.home-operations .dashboard-actions h2 {font-size:var(--type-body);margin-bottom:.5rem}
+.home-operations .dashboard-activity {background:var(--surface-soft);padding:1rem}
+.home-operations .dashboard-activity ol {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.home-operations .dashboard-activity li {display:grid;gap:.375rem;border:0;padding:0}
+.home-operations .dashboard-activity time {font-size:var(--type-micro)}
 /* Login inherits the actual installation name; no new authentication flow. */
 .login-page {grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:clamp(2rem,5vw,6rem);padding:clamp(1.25rem,5vw,5rem);align-items:center;background:var(--color-background)}
 .login-art {align-self:stretch;min-height:600px;border-radius:var(--radius-panel);padding:clamp(2rem,4vw,4rem);display:flex;flex-direction:column;justify-content:space-between;background:var(--halo-gradient-dawn)}
@@ -102,35 +101,29 @@ footer {font-size:var(--type-micro)}
 .login-card .button {margin-top:.75rem;min-height:48px}
 .login-card .demo-label {display:inline-flex;padding:.25rem .5rem;border:1px solid var(--color-border);border-radius:var(--radius-pill);font:500 var(--type-micro)/1.5 var(--font-data);color:var(--color-text-secondary);margin-bottom:1rem}
 @media(max-width:1100px){
- .home-work {grid-template-columns:1fr;gap:1rem}
- .halo-home .welcome {grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
- .halo-welcome-copy h1 {font-size:clamp(3.5rem,7vw,6rem)}
+ .home-operations .dashboard-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .halo-home .welcome {grid-template-columns:minmax(0,1fr) 130px}
+ .halo-welcome-copy h1 {font-size:clamp(2.25rem,4.4vw,4.25rem)}
  .halo-orbit {width:min(100%,250px)}
  .login-art {min-height:520px}
  .login-art .halo-orbit {width:190px}
 }
 @media(max-width:760px){
+ .home-operations .dashboard-grid,.home-operations .dashboard-activity ol {grid-template-columns:1fr}
+ .home-operations .dashboard-card {padding:.875rem}
+ .home-operations .dashboard-toolbar p {order:3;flex-basis:100%}
+ .home-operations .dashboard-activity li {grid-template-columns:minmax(0,1fr) auto;align-items:start}
  .content {padding:1.25rem 1rem}
  .sidebar-head,.is-collapsed .sidebar-head {padding:1.25rem 1rem}
  .topbar {min-height:70px;padding:.5rem .75rem}
  .topbar-tools>.theme-picker summary {width:44px}
  .topbar .context {font-size:var(--type-micro)}
- .halo-home .welcome {grid-template-columns:1fr;padding:1.5rem;gap:0;min-height:0}
- .halo-welcome-copy h1 {font-size:clamp(3.25rem,12vw,5rem);margin-block:1.5rem 1rem;max-width:13ch}
+ .halo-home .welcome {grid-template-columns:minmax(0,1fr) 64px;padding:.75rem 0;gap:.75rem;min-height:0}
+ .halo-welcome-copy h1 {font-size:clamp(2rem,7vw,2.75rem);margin:0 0 .5rem}
  .halo-intro {font-size:var(--type-body-small)}
- .halo-home .welcome-identity {margin-top:1.5rem;max-width:none}
- .halo-welcome-art {align-items:flex-end;flex-direction:row;justify-content:space-between;gap:1rem;margin-top:1.75rem}
- .halo-welcome-art .halo-orbit {width:125px;flex:none;margin-right:.5rem}
- .halo-welcome-art p {order:-1;align-self:center;font-size:.5625rem;max-width:15ch;margin:0}
- .home-work {padding:1.75rem 0}
- .home-tools {grid-template-columns:1fr;gap:0}
- .home-tool {min-height:56px;font-size:var(--type-body-small)}
- .halo-home .directory {margin-top:1.75rem}
- .halo-home .area-grid {grid-template-columns:1fr;gap:0}
- .halo-home .area-item {min-height:110px;gap:.75rem}
- .halo-home .area-copy p {font-size:var(--type-body-small)}
+ .halo-welcome-art {margin:0}
+ .halo-welcome-art .halo-orbit {width:58px;margin:0}
  .halo-home .section-heading h2 {font-size:var(--type-section-title)}
- .halo-home .directory-note {font-size:var(--type-micro);max-width:none;white-space:nowrap}
  .login-page {grid-template-columns:1fr;gap:1.5rem;padding:1.25rem;align-content:center}
  .login-art {min-height:0;padding:1.5rem;display:block}
  .login-art h2 {font-size:clamp(2.25rem,10vw,3rem);max-width:none;margin-bottom:0}

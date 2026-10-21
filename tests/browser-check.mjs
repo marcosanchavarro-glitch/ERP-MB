@@ -21,7 +21,7 @@ try {
   if(await page.locator('#login-form').isVisible()){await page.getByLabel('Usuario',{exact:true}).fill(user.username);await page.getByLabel('Contraseña',{exact:true}).fill(user.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();}
   await page.locator('.shell').waitFor();
   await page.locator('h1').waitFor();
-  const available=(await (await page.request.get(base+'/api/auth/session')).json()).user.access.paths;assert.equal(await page.locator('.area-item').count(),navigation.filter(a=>a.path!=='/'&&available.some(p=>p.path===a.path||p.path.startsWith(a.path+'/'))).length);
+  const available=(await (await page.request.get(base+'/api/auth/session')).json()).user.access.paths;const portals=await page.locator('.halo-portal').evaluateAll(a=>a.map(e=>e.getAttribute('href').slice(1)));assert.ok(portals.length>0);assert.equal(new Set(portals).size,portals.length);for(const path of portals)assert.ok(available.some(p=>p.path===path));
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${name}: horizontal overflow`);
   await page.screenshot({path:`test-results/${name}.png`,fullPage:true});
   if(width<=760){
@@ -47,7 +47,7 @@ try {
    if(section.status!=='PLANNED'||!available.some(p=>p.path===section.path)) continue;
    await page.goto(`${base}/#${section.path}`);
    await page.getByRole('heading',{name:section.name,exact:true}).waitFor();
-   assert.ok(await page.getByRole('heading',{name:'Este módulo todavía no está disponible.'}).isVisible());
+   assert.ok(await page.getByRole('heading',{name:'En preparación'}).isVisible());
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${name}: ${section.path} overflow`);
   }
   console.log(`${name}: home, navigation and all placeholders passed`);

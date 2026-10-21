@@ -36,7 +36,7 @@ try{
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.halo-chart-key').first().evaluate(e=>getComputedStyle(e).animationName),'none');
  await page.goto(server.base+'/#/oficina/asistencia/mensual?month=2026-09');await page.locator('.attendance-month-table').waitFor();await page.locator('[data-attendance-charts] > summary').click();await page.locator('.halo-chart-donut').first().waitFor();
  await page.goto(server.base+'/#/oficina/trabajo/panorama?month=2020-01');await page.locator('.work-charts').waitFor();assert.equal(await page.locator('.halo-chart-line svg').count(),0);
- await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();await login(limited);await page.goto(server.base+'/#/');await page.locator('.halo-home').waitFor();assert.equal(await page.locator('.halo-portal').count(),2);assert.equal(await page.locator('.halo-portal[href="#/oficina"]').count(),0);
+ await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();await login(limited);await page.goto(server.base+'/#/');await page.locator('.halo-home').waitFor();assert.equal(await page.locator('.halo-portal').count(),0);assert.equal(await page.locator('.halo-portal[href="#/oficina"]').count(),0);
  const client=httpClient(server.base);await client.login(limited);assert.equal((await client.request('/api/office-work/overview?month=2026-09')).status,403);
  await page.goto(server.base+'/#/oficina/trabajo/panorama');await page.getByRole('heading',{name:'Acceso no disponible',exact:true}).waitFor();assert.equal(await page.locator('.halo-chart').count(),0);
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);

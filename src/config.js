@@ -31,7 +31,7 @@ export function createNavigation(iconOverrides = {}) {
 }
 export const navigation = createNavigation();
 // Contextual portal entry uses the same configurable icon contract as the main modules.
-export function createLeaderNavigation(iconOverrides={}){const id='mi-celula',defaultIcon='people';return {id,name:'Mi Célula',icon:resolveIconId(iconOverrides[id],defaultIcon),defaultIcon,path:'/mi-celula',status:'ACTIVE',children:[]};}
+export function createLeaderNavigation(iconOverrides={}){const id='mi-celula',defaultIcon='people';return {id,name:'Mi Célula',description:'Reuniones e integrantes de tu célula.',icon:resolveIconId(iconOverrides[id],defaultIcon),defaultIcon,path:'/mi-celula',status:'ACTIVE',children:[]};}
 export const leaderNavigation=createLeaderNavigation();
 
 export function resolveRoute(path, modules = navigation) {

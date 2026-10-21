@@ -10,10 +10,10 @@
 .halo-backdrop[data-halo-position=center] {width:65%;max-width:none;right:18%}
 .halo-backdrop[data-halo-variant=wash]::after {display:none}
 .halo-backdrop[data-halo-variant=rings] {background:none}
-.halo-heading {position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius-panel);padding:var(--halo-heading-space);margin-bottom:1.5rem;background:var(--halo-heading-bg);color:var(--halo-heading-ink);border:1px solid var(--color-border);min-width:0}
+.halo-heading {position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius-panel);padding:1.125rem 1.25rem;margin-bottom:1.125rem;background:var(--halo-heading-bg);color:var(--halo-heading-ink);border:1px solid var(--color-border);min-width:0}
 .halo-heading-content {position:relative;z-index:1;min-width:0;max-width:92%}
-.halo-heading .eyebrow {color:var(--halo-heading-accent);font-size:var(--type-micro)}
-.halo-heading h1 {color:var(--halo-heading-ink);margin:.625rem 0;font-size:var(--type-page-title);font-weight:600;letter-spacing:-.045em;line-height:1.12;overflow-wrap:anywhere;max-width:30ch}
+.halo-heading .eyebrow {display:none;color:var(--halo-heading-accent);font-size:var(--type-micro)}
+.halo-heading h1 {color:var(--halo-heading-ink);margin:.375rem 0;font-size:clamp(1.625rem,2.4vw,2rem);font-weight:600;letter-spacing:-.045em;line-height:1.12;overflow-wrap:anywhere;max-width:30ch}
 .halo-heading p {color:var(--halo-heading-muted);font-size:var(--type-body-small);line-height:1.7;margin:0;max-width:65ch}
 /* Glass variants each carry a solid fallback; only a few contextual surfaces blur. */
 .halo-glass {--glass-bg:var(--halo-glass);--glass-solid:var(--color-surface-elevated);--glass-ink:var(--color-text-primary);--glass-muted:var(--color-text-secondary);background:var(--glass-solid);color:var(--glass-ink);border:1px solid var(--halo-glass-border);box-shadow:var(--shadow-soft);border-radius:var(--radius-panel)}
@@ -34,9 +34,9 @@
 .sidebar .brand-mark {border-color:var(--color-border);background:transparent}
 .sidebar .nav-row.selected {box-shadow:inset 2px 0 var(--color-primary)}
 .sidebar .nav-row>a:hover,.sidebar .nav-children a:hover {color:var(--color-primary)}
-.halo-home .halo-welcome-art {border-radius:50%;padding:1.75rem;background:transparent;color:var(--color-text-primary)}
+.halo-home .halo-welcome-art {padding:0;background:transparent;color:var(--color-text-primary)}
 .halo-home .halo-welcome-art p {color:var(--color-text-secondary)}
-.halo-home .welcome {gap:2rem;background:transparent;border:0;box-shadow:none}
+.halo-home .welcome {background:transparent;border:0;box-shadow:none}
 /* Oficina: the real goal remains prominent; no additional metrics or actions. */
 .work-focus {padding:1.5rem!important;overflow:hidden}
 .work-focus>h2 {font:500 var(--type-micro)/1.5 var(--font-data);text-transform:uppercase;letter-spacing:.08em;margin-top:0}
@@ -102,12 +102,12 @@ dialog::backdrop {background:var(--color-overlay)}
  .halo-heading p {font-size:var(--type-body-small)}
  .halo-backdrop {width:24%;opacity:.12}
  .halo-backdrop::after {width:140px}
- .halo-home .welcome {position:relative;padding:1.5rem;gap:0}
- .halo-home .halo-welcome-art {position:absolute;right:1rem;bottom:1.25rem;width:80px;height:80px;margin:0;padding:.5rem;border-radius:50%;pointer-events:none}
+ .halo-home .welcome {position:relative;padding:.75rem 0;gap:.75rem}
+ .halo-home .halo-welcome-art {position:static;width:64px;margin:0;padding:0;pointer-events:none}
  .halo-home .halo-welcome-art p {display:none}
  .halo-home .halo-welcome-art .halo-orbit {width:58px;margin:0}
  .halo-home .welcome-identity {padding-right:80px}
- .halo-home .halo-welcome-copy h1 {font-size:clamp(2.75rem,11vw,3.75rem)}
+ .halo-home .halo-welcome-copy h1 {font-size:clamp(2rem,7vw,2.75rem)}
  .work-focus {padding:1rem!important}
  .work-focus .work-metrics {gap:1rem}
  .work-focus .work-metrics .work-goal {grid-column:span 2;padding:1rem}
@@ -123,7 +123,7 @@ dialog::backdrop {background:var(--color-overlay)}
  .profile-heading {padding-top:1rem}
  :root[data-theme-area=formacion] .halo-heading h1,:root[data-theme-area=hdr] .halo-heading h1,:root[data-theme-area=multimedia] .halo-heading h1 {font-size:2rem}
 }
-@media(forced-colors:active){.halo-backdrop {display:none}.halo-glass,.halo-heading {border:1px solid CanvasText;background:Canvas;color:CanvasText}.halo-heading h1,.halo-heading p,.halo-heading .eyebrow {color:CanvasText}.halo-orbit-value {stroke:Highlight}}
+@media(forced-colors:active){.halo-backdrop {display:none}.halo-glass,.halo-heading {border:1px solid CanvasText;background:Canvas;color:CanvasText}.halo-heading h1,.halo-heading p,.halo-heading .eyebrow {display:none;color:CanvasText}.halo-orbit-value {stroke:Highlight}}
 /* One native CSS background continues throughout the document, without blur layers. */
 body {min-height:100dvh;background:var(--halo-atmosphere)}
 .workspace,.leader-shell,.leader-main,.login-page {background:transparent}
@@ -135,21 +135,18 @@ body {min-height:100dvh;background:var(--halo-atmosphere)}
 .people-table,.cells-table,.attendance-month-table,.person-dialog,.cell-dialog {background:var(--surface-operational)}
 .halo-orbit-value {stroke:var(--color-primary)}
 /* Portals share the orbital vocabulary; names and context never depend on hover. */
-.halo-portals {margin-top:2.5rem}
+.halo-portals {margin-top:1.5rem}
+.halo-home .section-heading h2 {font-size:var(--type-section-title);margin:0}
 .halo-portals-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
-.halo-portal {display:grid;grid-template-columns:minmax(80px,130px) minmax(0,1fr) 24px;align-items:center;gap:1rem;min-width:0;padding:1.25rem;background:var(--surface-soft);border:1px solid var(--color-border);border-radius:var(--radius-panel);transition:background var(--halo-motion),border-color var(--halo-motion)}
+.halo-portal {display:grid;grid-template-columns:80px minmax(0,1fr) 20px;align-items:center;gap:1rem;min-width:0;min-height:96px;padding:1rem;background:var(--surface-soft);border:1px solid var(--color-border);border-radius:var(--radius-panel);transition:background var(--halo-motion),border-color var(--halo-motion)}
 .halo-portal-copy {display:grid;gap:.375rem;min-width:0;overflow-wrap:anywhere}
-.halo-portal-copy strong {font-size:var(--type-section-title);line-height:1.15;letter-spacing:-.035em}
+.halo-portal-copy strong {font-size:var(--type-body);line-height:1.15;letter-spacing:-.035em}
 .halo-portal-copy>span {font-size:var(--type-body-small);color:var(--color-text-secondary);line-height:1.5}
-.halo-portal-art {display:grid;place-items:center;position:relative;min-width:0;aspect-ratio:1;color:var(--color-primary)}
-.halo-portal-art .halo-orbit {--portal-rotation:0deg;--portal-scale-y:1;width:88%;transform:rotate(var(--portal-rotation)) scaleY(var(--portal-scale-y));transition:transform var(--halo-motion)}
-.halo-portal-node {position:absolute;width:7px;height:7px;background:var(--color-info);border-radius:50%;left:10%;top:25%}
-.halo-portal-node:last-child {left:76%;top:70%;background:var(--color-primary)}
-.halo-portal[data-portal-variant="1"] .halo-orbit {--portal-rotation:-30deg;--portal-scale-y:.65}
-.halo-portal[data-portal-variant="2"] .halo-orbit i {border-radius:30% 50% 40% 50%}
-.halo-portal[data-portal-variant="3"] .halo-orbit {border-radius:20% 50% 50% 50%}
+.halo-portal-graphic {display:block;width:100%;max-height:72px;fill:var(--color-surface);stroke:var(--color-info);stroke-width:1.5;transition:transform var(--halo-motion)}
+.halo-portal-graphic path,.halo-portal-graphic ellipse {fill:none}
+.halo-portal-graphic .halo-graphic-core {fill:var(--color-primary-soft);stroke:var(--color-primary);stroke-width:2}
 .halo-portal:is(:hover,:focus-visible) {background:var(--surface-base);border-color:var(--color-primary)}
-.halo-portal:is(:hover,:focus-visible) .halo-orbit {transform:rotate(var(--portal-rotation)) scaleY(var(--portal-scale-y)) scale(.96)}
+.halo-portal:is(:hover,:focus-visible) .halo-portal-graphic {transform:translateY(-2px) rotate(2deg)}
 :is(.home-tool,.area-item,.halo-portal,.button)>.icon:last-child {transition:transform var(--halo-motion)}
 :is(.home-tool,.area-item,.halo-portal,.button):is(:hover,:focus-visible)>.icon:last-child {transform:translateX(3px)}
 .button:active,.halo-portal:active {transform:translateY(1px)}
@@ -189,11 +186,11 @@ body {min-height:100dvh;background:var(--halo-atmosphere)}
 .halo-chart-empty {padding:1rem;border-left:2px solid var(--color-border);color:var(--color-text-secondary)}
 @media(max-width:760px){
  .halo-portals-grid {grid-template-columns:1fr}
- .halo-portal {grid-template-columns:70px minmax(0,1fr) 20px;padding:1rem;gap:.75rem}
- .halo-portal-copy strong {font-size:1.25rem}
+ .halo-portal {grid-template-columns:60px minmax(0,1fr) 18px;padding:.875rem;gap:.75rem;min-height:84px}
+ .halo-portal-copy strong {font-size:var(--type-body)}
  .halo-chart-donut {grid-template-columns:90px minmax(0,1fr);gap:.75rem}
  .halo-home .halo-welcome-art {background:transparent}
 }
 @media(prefers-reduced-transparency:reduce){.topbar,.halo-portal,.sidebar,.halo-glass,.cells-panel,.leader-card {background:var(--color-surface)!important;backdrop-filter:none}}
-@media(prefers-reduced-motion:reduce){.halo-portal,.halo-portal-art .halo-orbit,:is(.home-tool,.area-item,.halo-portal,.button)>.icon:last-child {transition:none}.halo-portal:is(:hover,:focus-visible) .halo-orbit,:is(.home-tool,.area-item,.halo-portal,.button):is(:hover,:focus-visible)>.icon:last-child,.button:active,.halo-portal:active {transform:none}}
-@media(forced-colors:active){body {background:Canvas}.halo-portal-art {display:none}.halo-portal {background:Canvas;border-color:CanvasText;grid-template-columns:1fr 24px}.halo-chart-fill,.halo-chart-key>i {fill:Highlight;background:Highlight}.halo-chart-arc,.halo-chart-line polyline,.halo-chart-line circle {stroke:Highlight}.halo-chart text {fill:CanvasText}.halo-chart-tooltip {background:Canvas;color:CanvasText;border:1px solid CanvasText}}
+@media(prefers-reduced-motion:reduce){.halo-portal,.halo-portal-graphic,:is(.home-tool,.area-item,.halo-portal,.button)>.icon:last-child {transition:none}.halo-portal:is(:hover,:focus-visible) .halo-portal-graphic,:is(.home-tool,.area-item,.halo-portal,.button):is(:hover,:focus-visible)>.icon:last-child,.button:active,.halo-portal:active {transform:none}}
+@media(forced-colors:active){body {background:Canvas}.halo-portal-graphic {display:none}.halo-portal {background:Canvas;border-color:CanvasText;grid-template-columns:1fr 24px}.halo-chart-fill,.halo-chart-key>i {fill:Highlight;background:Highlight}.halo-chart-arc,.halo-chart-line polyline,.halo-chart-line circle {stroke:Highlight}.halo-chart text {fill:CanvasText}.halo-chart-tooltip {background:Canvas;color:CanvasText;border:1px solid CanvasText}}
