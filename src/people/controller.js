@@ -1,5 +1,5 @@
 import {sessionState} from '../auth/session.js';
-import {skeleton} from '../ui/skeleton.js';
+import {skeleton,holdLayout} from '../ui/skeleton.js';
 import {loadPersonContacts} from '../office-work/contacts.js';
 import {personContextReturn} from './context.js';
 import {loadAccountAction} from '../identity-admin/api.js';
@@ -35,10 +35,10 @@ export function mountPeople(root,route) {
  async function refreshRows() {
   const current=++sequence;
   const target=root.querySelector('#people-results');if(!target)return;
-  target.setAttribute('aria-busy','true');target.innerHTML=skeleton('table',{headers:['Persona','Contacto','Localidad','Estado','Ficha']});
+  const release=holdLayout(target);target.setAttribute('aria-busy','true');target.innerHTML=skeleton('table',{headers:['Persona','Contacto','Localidad','Estado','Ficha']});
   try {const data=await request(`?${new URLSearchParams(Object.entries(listState).filter(([key])=>key!=='scroll'))}`);if(!active||current!==sequence||!target.isConnected)return;listState.page=data.page;target.innerHTML=listRows(data);root.querySelector('#results-announcement').textContent=`${data.total} personas encontradas. Página ${data.page} de ${data.pages}.`;}
   catch(error){if(active&&current===sequence)target.innerHTML=errorView(error.message);}
-  finally{if(active&&current===sequence)target.setAttribute('aria-busy','false');}
+  finally{if(active&&current===sequence)target.setAttribute('aria-busy','false');release();}
  }
  async function loadList() {
   root.innerHTML=loading;
@@ -93,7 +93,7 @@ export function mountPeople(root,route) {
  on('click',event=>{
   const action=event.target.closest('[data-people-action]')?.dataset.peopleAction;
   if(action==='quick-create')openQuickPerson({onCreated:()=>{listState.q='';listState.page=1;return loadList();}}).catch(error=>window.alert(error.message));
-  if(action==='clear'){Object.assign(listState,{q:'',status:'',sex:'',locality:'',completeness:'',page:1,scroll:0});loadList();}
+  if(action==='clear'){clearTimeout(searchTimer);Object.assign(listState,{q:'',status:'',sex:'',locality:'',completeness:'',page:1});for(const [key,value]of Object.entries(listState)){const control=root.querySelector(`[name="${key}"]`);if(control)control.value=value;}refreshRows();}
   if(action==='direction'){listState.direction=listState.direction==='asc'?'desc':'asc';event.target.closest('button').textContent=listState.direction==='asc'?'Ascendente':'Descendente';refreshRows();}
   if(action==='retry'){if(route.kind==='list')refreshRows();else if(tab==='history')loadHistory();}
   if(action==='cancel-form'&&!saving)location.hash=route.id?`${basePath}/${route.id}`:basePath;

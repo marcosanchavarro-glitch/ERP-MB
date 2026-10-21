@@ -1,5 +1,5 @@
 import {escape as e} from '../components.js';
-import {skeleton} from '../ui/skeleton.js';
+import {skeleton,holdLayout} from '../ui/skeleton.js';
 import {mapShell,detail,pinMarkup,ageLabel} from './views.js';
 import {mappable,coverageRing} from './geometry.js';
 let dispose=()=>{},leaflet;
@@ -14,13 +14,13 @@ async function loadLeaflet(){
 }
 export function mountTerritory(root){
  unmountTerritory();root.innerHTML=mapShell();
- let active=true,data=null,selected=null,map=null,L=null,request=null,sequence=0,tileTimer,resetTimer,tiles=null,markers=null,circles=null,mapError=false;
+ let active=true,data=null,selected=null,map=null,L=null,request=null,sequence=0,tileTimer,resetTimer,resetRelease=()=>{},tiles=null,markers=null,circles=null,markerEntries=new Map(),mapError=false;
  const abort=new AbortController(),reduced=matchMedia('(prefers-reduced-motion: reduce)'),host=root.querySelector('[data-territory-map]'),status=root.querySelector('[data-territory-status]'),mapState=root.querySelector('[data-territory-map-state]'),panel=root.querySelector('[data-territory-detail]'),list=root.querySelector('[data-territory-list]'),error=root.querySelector('[data-territory-error]'),coverage=root.querySelector('[data-territory-coverage]');
  const on=(type,fn)=>root.addEventListener(type,fn,{signal:abort.signal});
  const points=()=>data?.items.filter(mappable)||[];
- function clearMap(){clearTimeout(tileTimer);map?.remove();map=null;markers=null;circles=null;tiles=null;host.replaceChildren();for(const name of [...host.classList])if(name.startsWith('leaflet-'))host.classList.remove(name);}
+ function clearMap(){clearTimeout(tileTimer);map?.remove();map=null;markers=null;circles=null;tiles=null;markerEntries.clear();host.replaceChildren();for(const name of [...host.classList])if(name.startsWith('leaflet-'))host.classList.remove(name);}
  const resize=new ResizeObserver(()=>{if(map)map.invalidateSize({animate:false,pan:false});});resize.observe(host);
- dispose=()=>{active=false;sequence++;request?.abort();abort.abort();clearTimeout(resetTimer);resize.disconnect();clearMap();};
+ dispose=()=>{active=false;sequence++;request?.abort();abort.abort();clearTimeout(resetTimer);resetRelease();resize.disconnect();clearMap();};
  function mapFailure(){if(!active||mapError)return;mapError=true;clearTimeout(tileTimer);mapState.hidden=false;mapState.innerHTML='<p>No pudimos cargar el mapa base. Podés consultar las células en el listado.</p><button class="button secondary" data-territory-map-retry>Reintentar mapa</button>';}
  function drawCoverage(){
   if(!map)return;circles.clearLayers();if(!coverage.checked)return;
@@ -33,10 +33,10 @@ export function mountTerritory(root){
   const c=data?.items.find(c=>c.id===id);if(!c)return;selected=id;panel.innerHTML=detail(c);panel.hidden=false;
   list.querySelectorAll('[data-territory-select]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.territorySelect===id)));
   if(map&&mappable(c))map.panTo([c.latitude,c.longitude],{animate:!reduced.matches,duration:0.25});
-  drawMarkers();drawCoverage();if(focus){panel.focus({preventScroll:true});if(matchMedia('(max-width:1000px)').matches)panel.scrollIntoView({block:'nearest',behavior:reduced.matches?'instant':'smooth'});}
+  drawMarkers();drawCoverage();if(focus)panel.focus({preventScroll:true});
  }
  function drawMarkers(){
-  if(!map)return;markers.clearLayers();
+  if(!map)return;const visible=new Set();
   const groups=new Map(),bounds=map.getBounds().pad(0.3),zoom=map.getZoom();
   for(const c of points()){
    if(!bounds.contains([c.latitude,c.longitude]))continue;
@@ -45,10 +45,19 @@ export function mountTerritory(root){
   }
   for(const group of groups.values()){
    const c=group[0],cluster=group.length>1;
+   const key=cluster?'cluster:'+group.map(c=>c.id).join(','):c.id;visible.add(key);
+   let entry=markerEntries.get(key);
+   if(!entry){
    const marker=L.marker([c.latitude,c.longitude],{icon:L.divIcon({className:'territory-marker',html:cluster?`<span class="territory-cluster" aria-hidden="true">${group.length}</span>`:pinMarkup(c.id===selected,c.coordinateStatus!=='VERIFIED'),iconSize:[44,54],iconAnchor:[22,48]}),keyboard:true,autoPanOnFocus:false,title:cluster?`${group.length} células. Acercar mapa.`:`Seleccionar ${c.displayCode}`,zIndexOffset:c.id===selected?1000:0});
-   const action=()=>cluster?map.setView([c.latitude,c.longitude],Math.min(17,zoom+2),{animate:!reduced.matches}):select(c.id);
+   const action=()=>cluster?map.setView([c.latitude,c.longitude],Math.min(17,map.getZoom()+2),{animate:!reduced.matches}):select(c.id);
    marker.on('click',action);marker.on('add',()=>{const element=marker.getElement();element.setAttribute('aria-label',marker.options.title);element.setAttribute('aria-pressed',String(!cluster&&c.id===selected));element.addEventListener('keydown',event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();action();}});});marker.addTo(markers);
+    entry={marker};markerEntries.set(key,entry);
+   }
+   entry.marker.setZIndexOffset(c.id===selected?1000:0);
+   const element=entry.marker.getElement();if(element){element.setAttribute('aria-pressed',String(!cluster&&c.id===selected));element.querySelector('.territory-pin')?.classList.toggle('is-selected',c.id===selected);}
+
   }
+  for(const [key,entry]of markerEntries)if(!visible.has(key)){markers.removeLayer(entry.marker);markerEntries.delete(key);}
  }
  function recenter(){const items=points();if(map&&items.length)map.fitBounds(items.map(c=>[c.latitude,c.longitude]),{padding:[38,38],maxZoom:15,animate:!reduced.matches});}
  async function startMap(current=sequence){
@@ -73,15 +82,15 @@ export function mountTerritory(root){
   list.innerHTML=data.items.length?`<ul>${data.items.map(c=>`<li><button class="territory-cell" data-territory-select="${e(c.id)}" aria-pressed="false"><strong>${e(c.displayCode)}</strong><span>${e(c.locality||'Sin localidad')} · ${e(ageLabel(c))}</span><small>${!mappable(c)?'Ubicación no representable en el mapa':c.coordinateStatus==='VERIFIED'?'Verificada manualmente':'Pendiente de verificar'}</small></button></li>`).join('')}</ul><div class="people-pagination"><span>Hasta ${data.pageSize} células por página; el mapa muestra esta página.</span><div><button class="button secondary" data-territory-page="${data.page-1}" ${data.page<=1?'disabled':''}>Anterior</button><button class="button secondary" data-territory-page="${data.page+1}" ${data.page>=data.pages?'disabled':''}>Siguiente</button></div></div>`:'<p>Sin células para estos filtros. Podés restablecerlos e intentar nuevamente.</p>';
  }
  async function fetchCells(page=1){
-  const current=++sequence;request?.abort();request=new AbortController();clearMap();data=null;selected=null;panel.hidden=true;error.replaceChildren();status.textContent='Cargando células…';list.innerHTML=skeleton('list');mapState.hidden=false;mapState.textContent='Cargando células…';
+  const release=holdLayout(root),current=++sequence;request?.abort();request=new AbortController();clearMap();data=null;selected=null;panel.hidden=true;error.replaceChildren();status.textContent='Cargando células…';list.innerHTML=skeleton('list');mapState.hidden=false;mapState.textContent='Cargando células…';
   const query=new URLSearchParams([...new FormData(root.querySelector('form'))].filter(([,v])=>v!==''));query.set('page',page);
   try{
    const response=await fetch('/api/territory/cells?'+query,{signal:request.signal});const value=await response.json();if(!response.ok){if(response.status===401)window.dispatchEvent(new Event('session-expired'));throw Object.assign(new Error(value.message||'No pudimos cargar las células.'),{status:response.status});}
    if(!active||current!==sequence)return;data=value;textList();await startMap(current);
-  }catch(err){if(!active||current!==sequence||err.name==='AbortError')return;list.replaceChildren();status.textContent='No se pudieron cargar las células.';mapState.textContent='Mapa no disponible.';error.innerHTML=`<p>${e(err.status===403?'Esta sección no está disponible.':err.message==='Failed to fetch'?'No pudimos conectar con el servidor.':err.message)}</p>${err.status===403?'':'<button class="button secondary" data-territory-retry>Reintentar</button>'}`;}
+  }catch(err){if(!active||current!==sequence||err.name==='AbortError')return;list.replaceChildren();status.textContent='No se pudieron cargar las células.';mapState.textContent='Mapa no disponible.';error.innerHTML=`<p>${e(err.status===403?'Esta sección no está disponible.':err.message==='Failed to fetch'?'No pudimos conectar con el servidor.':err.message)}</p>${err.status===403?'':'<button class="button secondary" data-territory-retry>Reintentar</button>'}`;}finally{release();}
  }
  on('submit',event=>{if(event.target.matches('[data-territory-filters]')){event.preventDefault();fetchCells();}});
- on('reset',()=>{clearTimeout(resetTimer);clearMap();list.replaceChildren();panel.hidden=true;status.textContent='Cargando células…';resetTimer=setTimeout(()=>{if(active)fetchCells();},0);});
+ on('reset',()=>{const release=holdLayout(root);resetRelease();resetRelease=release;clearTimeout(resetTimer);clearMap();list.replaceChildren();panel.hidden=true;status.textContent='Cargando células…';resetTimer=setTimeout(()=>{if(active)fetchCells().finally(release);else release();},0);});
  on('change',event=>{if(event.target===coverage)drawCoverage();});
  on('click',event=>{
   const target=event.target.closest('button');if(!target)return;
@@ -90,7 +99,7 @@ export function mountTerritory(root){
   if(target.hasAttribute('data-territory-recenter'))recenter();
   if(target.hasAttribute('data-territory-map-retry'))startMap();
   if(target.hasAttribute('data-territory-retry'))fetchCells();
-  if(target.hasAttribute('data-territory-close')){selected=null;panel.hidden=true;drawMarkers();drawCoverage();list.querySelectorAll('[data-territory-select]').forEach(b=>b.setAttribute('aria-pressed','false'));root.querySelector('[data-territory-recenter]').focus();}
+  if(target.hasAttribute('data-territory-close')){selected=null;panel.hidden=true;drawMarkers();drawCoverage();list.querySelectorAll('[data-territory-select]').forEach(b=>b.setAttribute('aria-pressed','false'));root.querySelector('[data-territory-recenter]').focus({preventScroll:true});}
  });
  fetchCells();
 }

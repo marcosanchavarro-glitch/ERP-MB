@@ -1,4 +1,4 @@
-import {skeleton} from '../ui/skeleton.js';
+import {skeleton,holdLayout} from '../ui/skeleton.js';
 import {mountDashboard} from './dashboard.js';
 import {escape as e,pageTitle} from '../components.js';
 import {personLink} from '../people/views.js';
@@ -47,16 +47,16 @@ export function mountOffice(root,kind,options={}){
   const cellSelect=root.querySelector('[name="cellId"]');if(cellSelect)cellSelect.innerHTML='<option value="">Todas</option>'+data.cells.map(c=>`<option value="${e(c.id)}" ${state.cellId===c.id?'selected':''}>${e(c.displayCode)}</option>`).join('')+(state.cellId&&!data.cells.some(c=>c.id===state.cellId)?`<option selected value="${e(state.cellId)}">Célula seleccionada</option>`:'');
   const problem=root.querySelector('[name="problem"]');if(problem){const selected=state.problem;for(const [value,label]of Object.entries(data.problemLabels))if(![...problem.options].some(o=>o.value===value))problem.add(new Option(label,value));problem.value=selected;}
  }
- async function refresh(){const seq=++serial;root.querySelector('[data-insight-summary]').innerHTML=skeleton('cards',{rows:2});root.querySelector('[data-insight-results]').setAttribute('aria-busy','true');root.querySelector('[data-insight-results]').innerHTML=skeleton('list');
+ async function refresh({rebuild=false}={}){const release=holdLayout(root);if(rebuild){const focus=document.activeElement?.dataset.tab;shell();if(focus)root.querySelector(`[data-tab="${focus}"]`)?.focus({preventScroll:true});}const seq=++serial;root.querySelector('[data-insight-summary]').innerHTML=skeleton('cards',{rows:2});root.querySelector('[data-insight-results]').setAttribute('aria-busy','true');root.querySelector('[data-insight-results]').innerHTML=skeleton('list');
   try{const keys=birthday?['q','status','cellId','sex','month','minAge','maxAge','view','page']:['q','status','cellId','completeness','problem','page'];const query=Object.fromEntries(keys.map(key=>[key,state[key]??'']));const result=await api((birthday?'birthdays':'quality/'+state.tab)+'?'+new URLSearchParams(query));if(!active||seq!==serial)return;data=result;render();}
   catch(err){if(active&&seq===serial){root.querySelector('[data-insight-summary]').replaceChildren();root.querySelector('[data-insight-results]').innerHTML=`<p role="alert">${e(err.message)}</p><button class="button secondary" data-retry>Reintentar</button>`;}}
-  finally{if(active&&seq===serial)root.querySelector('[data-insight-results]').removeAttribute('aria-busy');}
+  finally{if(active&&seq===serial)root.querySelector('[data-insight-results]').removeAttribute('aria-busy');release();}
  }
  on('submit',ev=>{ev.preventDefault();Object.assign(state,Object.fromEntries(new FormData(ev.target)));state.page=1;refresh();});
  on('click',ev=>{const b=ev.target.closest('button');if(!b)return;
   if(b.dataset.page){state.page=Number(b.dataset.page);refresh();}
   if(b.dataset.problem){state.problem=b.dataset.problem;state.completeness='';state.page=1;root.querySelector('[name="problem"]').value=state.problem;root.querySelector('[name="completeness"]').value='';refresh();}
-  if(b.dataset.tab){state.tab=b.dataset.tab;state.status=state.tab==='cells'?'ACTIVE':'ACTIVA';state.problem='all';state.completeness='';state.cellId='';state.q='';state.page=1;data=null;shell();refresh();}
+  if(b.dataset.tab){state.tab=b.dataset.tab;state.status=state.tab==='cells'?'ACTIVE':'ACTIVA';state.problem='all';state.completeness='';state.cellId='';state.q='';state.page=1;data=null;refresh({rebuild:true});}
   if(b.hasAttribute('data-reset')){Object.assign(state,{q:'',cellId:'',completeness:'',problem:'all',status:state.tab==='cells'?'ACTIVE':'ACTIVA',page:1,...(birthday?{view:'today',month:'',sex:'',minAge:'',maxAge:''}:{})});data=null;shell();refresh();}
   if(b.hasAttribute('data-retry'))refresh();
  });

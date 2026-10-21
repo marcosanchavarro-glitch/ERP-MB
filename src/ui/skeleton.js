@@ -1,4 +1,14 @@
 import {escape as e} from '../components.js';
+const layouts=new WeakMap();
+// Keep the current geometry while an async region is replaced by its skeleton.
+// This prevents native scroll clamping during loading; it never writes scroll offsets.
+export function holdLayout(target){
+ if(!target)return ()=>{};
+ let state=layouts.get(target);
+ if(!state){state={minHeight:target.style.minHeight,count:0};layouts.set(target,state);target.style.minHeight=target.getBoundingClientRect().height+'px';}
+ state.count++;let released=false;
+ return ()=>{if(released)return;released=true;if(--state.count===0){target.style.minHeight=state.minHeight;layouts.delete(target);}};
+}
 // Neutral markup only: no records, session data or cached counts are accepted.
 export const skeletonText=()=>'<span class="skeleton-shape skeleton-text"></span>';
 export const skeletonAvatar=()=>'<span class="skeleton-shape skeleton-avatar"></span>';
