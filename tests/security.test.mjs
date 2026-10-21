@@ -1,5 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {request as httpRequest} from 'node:http';
 import {randomUUID} from 'node:crypto';
 import {fixture,testServer,account,httpClient} from './helpers.mjs';
 import {blankPerson} from '../src/domain/person.js';
@@ -23,6 +24,27 @@ test('Login real, cookies HttpOnly/SameSite, rotación, logout y endpoints priva
  assert.equal((await fetch(s.base+'/api/people',{headers:{Cookie:oldCookie}})).status,401);
  assert.equal((await c.request('/api/auth/register',{method:'POST',body:'{}'})).status,404);
  const hash=(await f.pool.query('SELECT password_hash FROM users WHERE id=$1',[user.id])).rows[0].password_hash;assert.match(hash,/^\$argon2id\$/);assert.notEqual(hash,user.password);
+});
+test('Enlaces externos abren solo la página pública; API, iframe y escrituras siguen protegidos',async t=>{
+ const {f,s}=await setup(t),user=await account(f),c=httpClient(s.base);await c.login(user);
+ const navigation={'Sec-Fetch-Site':'cross-site','Sec-Fetch-Mode':'navigate','Sec-Fetch-Dest':'document'};
+ // Native HTTP preserves Fetch Metadata exactly (fetch replaces Sec-Fetch-Mode with cors).
+ const probe=(path,headers={},method='GET')=>new Promise((resolve,reject)=>{
+  const req=httpRequest(new URL(path,s.base),{method,headers:{Origin:s.base,Cookie:c.cookie,'X-CSRF-Token':c.csrf,...headers}},res=>{res.resume();res.on('end',()=>resolve({status:res.statusCode,type:res.headers['content-type']}));});req.on('error',reject);req.end();
+ });
+ for(const headers of [{},navigation]){
+  const response=await probe('/',headers);assert.equal(response.status,200);assert.match(response.type,/text\/html/);
+ }
+ for(const [path,headers]of [
+  ['/',{'Sec-Fetch-Site':'cross-site'}],
+  ['/',{...navigation,'Sec-Fetch-Mode':'cors','Sec-Fetch-Dest':'empty'}],
+  ['/',{...navigation,'Sec-Fetch-Dest':'iframe'}],
+  ['/api/auth/session',navigation],['/api/people',navigation],['/src/app.js',navigation]
+ ])assert.equal((await probe(path,headers)).status,403,path);
+ for(const path of ['/','/api/auth/login','/api/auth/logout','/api/people'])assert.equal((await probe(path,navigation,'POST')).status,403,path);
+ assert.equal((await c.request('/api/auth/logout',{method:'POST',headers:{Origin:'https://otro.invalid'},body:'{}'})).status,403);
+ assert.equal((await c.request('/api/auth/logout',{method:'POST',headers:{'X-CSRF-Token':''},body:'{}'})).status,403);
+ assert.equal((await c.request('/api/people')).status,200);
 });
 test('Sesiones expiradas, revocadas y usuarios inactivos no acceden',async t=>{
  const {f,s}=await setup(t),user=await account(f),c=httpClient(s.base);await c.login(user);

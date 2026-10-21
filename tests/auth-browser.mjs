@@ -9,7 +9,12 @@ const browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANN
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
 async function login(account){await page.getByLabel('Usuario',{exact:true}).fill(account.username);await page.getByLabel('Contraseña',{exact:true}).fill(account.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();}
 try {
- await page.goto(s.base+'/#/oficina/personas');await page.locator('#login-form').waitFor();
+ await page.route('https://enlace.invalid/',route=>route.fulfill({contentType:'text/html',body:`<a href="${s.base}/#/oficina/personas">Abrir HALO</a>`}));
+ await page.goto('https://enlace.invalid/');
+ const [entry]=await Promise.all([page.waitForResponse(r=>r.url()===s.base+'/'&&r.request().isNavigationRequest()),page.getByRole('link',{name:'Abrir HALO',exact:true}).click()]);
+ // Loopback HTTP can omit Fetch Metadata; the exact header matrix is tested in security.test.mjs.
+ assert.equal(entry.status(),200);
+ await page.locator('#login-form').waitFor();
  for(const width of [1440,820,390,320]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`test-results/login-${width}.png`});}
  await login({...user,password:'contraseña-incorrecta'});await page.getByText('Usuario o contraseña incorrectos.',{exact:true}).waitFor();
  await login(user);await page.locator('.people-table').waitFor();
@@ -23,5 +28,5 @@ try {
  assert.equal(await page.locator('.profile-body').count(),0);
  await login(denied);await page.getByText('Esta sección no está disponible.',{exact:true}).waitFor();
  assert.equal(await page.locator('.people-table').count(),0);assert.deepEqual(errors,[]);
- console.log('Login responsive, contraseña incorrecta, cookies HttpOnly, sesión revocada, conservación de borrador, logout y acceso denegado: PASS');
+ console.log('Enlace externo real, login responsive, contraseña incorrecta, cookies HttpOnly, sesión revocada, conservación de borrador, logout y acceso denegado: PASS');
 }finally{await browser.close();await s.close();await f.close();}

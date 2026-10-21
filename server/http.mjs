@@ -44,7 +44,9 @@ export async function createAppServer(people,{pool,config}) {
  app.use((req,res,next)=>{
   if(req.headers.host!==new URL(config.origin).host)return next(new DomainError(403,'Host no permitido.'));
   if(config.production&&!req.secure)return next(new DomainError(400,'Se requiere una conexión HTTPS.'));
-  if(req.headers['sec-fetch-site']==='cross-site')return next(new DomainError(403,'Origen no permitido.'));
+  // External links may open the public app shell; API calls and embedded requests stay protected.
+  const externalEntry=req.method==='GET'&&req.path==='/'&&req.headers['sec-fetch-mode']==='navigate'&&req.headers['sec-fetch-dest']==='document';
+  if(req.headers['sec-fetch-site']==='cross-site'&&!externalEntry)return next(new DomainError(403,'Origen no permitido.'));
   if(!['GET','HEAD','OPTIONS'].includes(req.method)&&req.headers.origin!==config.origin)return next(new DomainError(403,'Origen no permitido.'));
   next();
  });
