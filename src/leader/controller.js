@@ -2,7 +2,7 @@ import {skeleton} from '../ui/skeleton.js';
 import {mountIntegration,integrationDirty,unmountIntegration,canLeaveIntegration} from '../newcomers/attendance.js';
 import {escape as e} from '../components.js';
 import {leaderRequest as api} from './api.js';
-import {base,back,dashboard,personView,pagination,card,label,meetingPath} from './views.js';
+import {base,back,dashboard,emptyCell,personView,pagination,card,label,meetingPath} from './views.js';
 import {attendanceStates,weekStart,addDays} from '../domain/meeting.js';
 import {cellRoles} from '../domain/cell.js';
 import {normalizeText} from '../domain/person.js';
@@ -14,7 +14,7 @@ export function leaderRoute(path){if(path===base)return {kind:'home'};let m=path
 window.addEventListener('beforeunload',ev=>{if(dirty||saving){ev.preventDefault();ev.returnValue='';}});
 export function mountLeader(root,route){unmountLeader();let active=true,cellId=route.cellId,meeting=null,marks=new Map(),filter='',sequence=0,timer,interval,polling=false,stale=false,signature='',from=addDays(weekStart(),-28),to=addDays(weekStart(),-1),listPage=1,search='';
  const abort=new AbortController();dispose=()=>{active=false;sequence++;clearTimeout(timer);clearInterval(interval);abort.abort();marks.clear();meeting=null;};const on=(type,fn)=>root.addEventListener(type,fn,{signal:abort.signal});
- const empty=()=>{root.innerHTML='<div class="leader-heading"><h1>Mi Célula</h1><p>No tenés una célula asignada actualmente.</p></div><section class="leader-card"><p>Consultá con Oficina si tu asignación necesita revisión.</p><button class="button secondary" data-leader-reload>Actualizar</button></section>';cellId=null;};
+ const empty=()=>{root.innerHTML=emptyCell();cellId=null;};
  async function error(err){if(!active)return;if(err.status===403||err.status===404){dirty=false;marks.clear();meeting=null;clearInterval(interval);interval=null;root.innerHTML='<h1>Mi Célula</h1><p role="alert">Tu acceso cambió o esta información no está dentro de tu célula.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a><button class="button secondary" data-leader-reload>Actualizar</button>';if(route.kind==='home'){try{const entry=await api();if(active&&!entry.cells.length)empty();}catch{}}return;}
   const box=root.querySelector('[data-leader-error]');if(box){box.textContent=err.message;box.focus();}else root.innerHTML=`${back()}<p role="alert">${e(err.message)}</p><button class="button" data-leader-reload>Reintentar</button>`;
  }

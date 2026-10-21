@@ -6,3 +6,11 @@
 body:has(.leader-shell)>.skip-link:not(:focus){clip-path:inset(50%);width:1px;height:1px;padding:0;overflow:hidden}
 
 .leader-person-info dd a{display:inline-flex;align-items:center;min-height:44px}
+.leader-main.content{width:100%;min-height:0;margin:0 auto}
+.leader-empty{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem;background:var(--surface-soft);border:1px solid var(--color-border);border-radius:var(--radius-panel)}
+.leader-empty-copy{min-width:0}
+.leader-empty h1{font-size:clamp(1.75rem,4vw,2.25rem);line-height:1.15;margin:.5rem 0 1rem;letter-spacing:-.035em}
+.leader-empty h2{font-size:var(--type-body);font-weight:600;margin:0 0 .5rem}
+.leader-empty p{font-size:var(--type-body-small);color:var(--color-text-secondary);margin:0 0 1rem;max-width:40ch}
+.leader-empty>.halo-orbit{width:64px;flex:none}
+@media(max-width:430px){.leader-empty{padding:1rem;gap:.5rem}.leader-empty>.halo-orbit{width:44px}}

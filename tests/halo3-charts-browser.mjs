@@ -20,7 +20,7 @@ const choose=async mode=>{const p=page.locator('.theme-picker:visible');if(!awai
 const login=async user=>{await page.getByLabel('Usuario',{exact:true}).fill(user.username);await page.getByLabel('Contraseña',{exact:true}).fill(user.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.locator('#login-form').waitFor({state:'detached'});};
 await mkdir('test-results/halo3',{recursive:true});
 try{
- await page.goto(server.base+'/#/oficina/trabajo/panorama?month=2026-09');await login(x.user);await page.locator('.halo-chart-donut').waitFor();
+ await page.goto(server.base+'/#/oficina/trabajo/panorama?month=2026-09');await login(x.user);await page.locator('.halo-chart-donut').first().waitFor();
  const expected=await x.monthly.overview({month:'2026-09'},x.ctx);
  assert.equal(await page.locator('.halo-chart-donut text').first().textContent(),String(expected.totals.covered+expected.totals.pending));
  assert.equal(await page.locator('.halo-chart-line').count(),2);assert.equal(await page.locator('.halo-chart-bars').count(),3);
@@ -34,7 +34,7 @@ try{
  const mark=page.locator('.halo-chart-donut .halo-chart-key').first();await mark.focus();await mark.locator('[role=tooltip]').waitFor({state:'visible'});await page.keyboard.press('Escape');await mark.locator('[role=tooltip]').waitFor({state:'hidden'});
  const series=page.locator('.halo-chart-line').first();await series.locator('summary').click();assert.ok(await series.locator('.halo-chart-key').count()>=2);
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.halo-chart-key').first().evaluate(e=>getComputedStyle(e).animationName),'none');
- await page.goto(server.base+'/#/oficina/asistencia/mensual?month=2026-09');await page.locator('.attendance-month-table').waitFor();await page.locator('[data-attendance-charts] > summary').click();await page.locator('.halo-chart-donut').waitFor();
+ await page.goto(server.base+'/#/oficina/asistencia/mensual?month=2026-09');await page.locator('.attendance-month-table').waitFor();await page.locator('[data-attendance-charts] > summary').click();await page.locator('.halo-chart-donut').first().waitFor();
  await page.goto(server.base+'/#/oficina/trabajo/panorama?month=2020-01');await page.locator('.work-charts').waitFor();assert.equal(await page.locator('.halo-chart-line svg').count(),0);
  await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();await login(limited);await page.goto(server.base+'/#/');await page.locator('.halo-home').waitFor();assert.equal(await page.locator('.halo-portal').count(),2);assert.equal(await page.locator('.halo-portal[href="#/oficina"]').count(),0);
  const client=httpClient(server.base);await client.login(limited);assert.equal((await client.request('/api/office-work/overview?month=2026-09')).status,403);
