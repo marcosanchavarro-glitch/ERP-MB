@@ -22,7 +22,7 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: APP_NAME
-        value: ERP Demo
+        value: HALO
       - key: ORGANIZATION_NAME
         value: Manantial de Bendiciones
       - key: TRUST_PROXY

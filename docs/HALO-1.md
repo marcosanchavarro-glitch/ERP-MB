@@ -1,7 +1,7 @@
 # HALO 1 — identidad visual progresiva
 
-HALO es la dirección visual y nombre de trabajo. No reemplaza `APP_NAME`, la
-identidad de la organización, el favicon ni su logo configurado.
+HALO es el nombre oficial del producto, confirmado por Marcos. Es el valor
+predeterminado de `APP_NAME`; la organización, el favicon y su logo se conservan.
 
 - `theme-tokens.css`: paleta central crema/terracota/tierra/ámbar/celeste,
   colores funcionales independientes, variantes cálidas claras y oscuras,

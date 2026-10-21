@@ -1,5 +1,5 @@
 // Public installation identity only; credentials never belong in this object.
-export const defaultIdentity={productName:'ERP Demo',organizationName:'Manantial de Bendiciones',displayName:'Manantial de Bendiciones',logo:null,favicon:'/src/favicon.svg',initials:'MB',officeName:'Oficina Manantial',churchesName:'Iglesias Manantial',accent:'#285c4c',environment:'local'};
+export const defaultIdentity={productName:'HALO',organizationName:'Manantial de Bendiciones',displayName:'Manantial de Bendiciones',logo:null,favicon:'/src/favicon.svg',initials:'MB',officeName:'Oficina Manantial',churchesName:'Iglesias Manantial',accent:'#285c4c',environment:'local'};
 export const identity={...defaultIdentity};
 export async function loadIdentity(){
  const response=await fetch('/api/installation',{credentials:'same-origin'});

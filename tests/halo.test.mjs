@@ -9,7 +9,7 @@ test('HALO: Inicio conserva identidad, escapa el saludo y usa solo las herramien
  assert.match(html,/Hola,/);assert.match(html,/&lt;script&gt;Marcos&lt;\/script&gt;/);assert.ok(!html.includes('<script>'));
  assert.match(html,/href="#\/multimedia\/fotografia"/);assert.ok(!html.includes('href="#/oficina'));
  assert.ok(!html.includes('href="#/administracion'));assert.ok(!html.includes('scope'));assert.ok(!html.includes('permisos efectivos'));
- assert.ok(!html.includes('HALO</'));assert.ok(!html.includes('Subfase 1.3'));
+ assert.ok(html.includes('HALO</span>'));assert.ok(!html.includes('Subfase 1.3'));
 });
 test('HALO: fuente local WOFF2 con licencia OFL y peso acotado',()=>{
  let bytes=0;for(const file of ['archivo-latin.woff2','archivo-latin-ext.woff2']){const url=new URL('../src/assets/fonts/'+file,import.meta.url);assert.equal(readFileSync(url).toString('ascii',0,4),'wOF2');bytes+=statSync(url).size;}

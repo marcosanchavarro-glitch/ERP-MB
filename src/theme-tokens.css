@@ -3,7 +3,7 @@
    Components consume semantic tokens, never area names or palette literals. */
 :root {
   color-scheme: light;
-  /* HALO is an art direction, not an installation/product name. */
+  /* HALO identity palette. Installation branding remains configurable. */
   --halo-terracotta: #c85a28;
   --halo-amber: #d98a3c;
   --halo-earth: #52463c;
