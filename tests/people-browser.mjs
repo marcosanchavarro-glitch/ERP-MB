@@ -73,7 +73,7 @@ try {
   await page.getByRole('button',{name:'Guardar persona',exact:true}).click();
   await heading(`Persona ${name} Demo Ensayo`).waitFor();
   await page.reload();await heading(`Persona ${name} Demo Ensayo`).waitFor();
-  await page.getByRole('button',{name:'Célula',exact:true}).click();await page.getByText('Sin pertenencia actual visible con tus permisos.',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Célula',exact:true}).click();await page.getByText('Sin célula actual para mostrar.',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Historial',exact:true}).click();await page.getByText('Persona creada.',{exact:true}).waitFor();
   await page.getByRole('link',{name:'Editar persona',exact:true}).click();await heading('Editar persona').waitFor();
   await page.getByLabel('Celular principal',{exact:true}).fill('000 000 1234');

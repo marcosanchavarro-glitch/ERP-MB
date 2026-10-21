@@ -71,6 +71,36 @@
   --halo-gradient-atmosphere: radial-gradient(ellipse at 92% 22%, var(--halo-glow-sky), transparent 52%), radial-gradient(ellipse at 65% 85%, var(--halo-glow-fire), transparent 62%), radial-gradient(ellipse at 52% 45%, var(--halo-glow-warm), transparent 65%), var(--halo-feature-base);
   --halo-gradient-earth: radial-gradient(ellipse at 90% 90%, var(--halo-glow-fire), transparent 65%), var(--color-surface-subtle);
   --surface-feature: var(--halo-gradient-atmosphere);
+  --halo-deep: #211c18;
+  --halo-on-deep: #f8f5ee;
+  --halo-deep-muted: #d3c4b3;
+  --halo-warm-accent: #f0ad7e;
+  --halo-paper: #f8f5ee;
+  --halo-on-paper: #211c18;
+  --halo-paper-muted: #665a50;
+  --halo-glass-blur: 10px;
+  --halo-glass-border: #d9cfc1;
+  --halo-glass-dark: #211c18ed;
+  --halo-glass-dark-solid: #211c18;
+  --halo-glass-light: #f8f5eeed;
+  --halo-glass-light-solid: #f8f5ee;
+  --halo-glass-warm: #f2e1cfe8;
+  --halo-glass-warm-solid: #f2e1cf;
+  --halo-glass-warm-ink: #211c18;
+  --halo-glass-warm-muted: #665344;
+  --halo-gradient-ember: radial-gradient(ellipse at 105% 100%, #c85a28b3, transparent 65%), radial-gradient(ellipse at 0 0, #80a4b833, transparent 70%), #211c18;
+  --halo-gradient-lumen: radial-gradient(ellipse at 100% 20%, #d98a3c7a, transparent 58%), radial-gradient(ellipse at 55% 100%, #80a4b861, transparent 62%), #f8f5ee;
+  --halo-gradient-skyline: radial-gradient(ellipse at 100% 50%, #80a4b857, transparent 65%), radial-gradient(ellipse at 76% 100%, #c85a2826, transparent 55%), var(--color-surface);
+  --halo-heading-bg: var(--halo-gradient-skyline);
+  --halo-heading-ink: var(--color-text-primary);
+  --halo-heading-muted: var(--color-text-secondary);
+  --halo-heading-accent: var(--color-primary);
+  --halo-heading-space: 1.5rem;
+  --halo-backdrop-strength: .4;
+  --halo-backdrop-color: var(--halo-terracotta);
+  --halo-action-bg: var(--halo-deep);
+  --halo-action-ink: var(--halo-on-deep);
+  --halo-action-hover: var(--halo-earth);
   --accent: var(--color-primary);
   --muted: var(--color-text-secondary);
   --line: var(--color-border);
@@ -108,4 +138,22 @@
   --halo-glow-fire: #c85a2840;
   --halo-glow-sky: #80a4b833;
   --halo-feature-base: #29231e;
+  --halo-glass-border: #6e5c4d;
+  --halo-glass-warm: #3d2e24eb;
+  --halo-glass-warm-solid: #3d2e24;
+  --halo-glass-warm-ink: #f8f5ee;
+  --halo-glass-warm-muted: #dcc4af;
+  --halo-action-bg: var(--halo-warm-accent);
+  --halo-action-ink: var(--halo-deep);
+  --halo-action-hover: #f6c5a0;
 }
+/* Module personality changes composition, never business/semantic state colors. */
+:root[data-theme-area=oficina] {--halo-heading-bg:var(--halo-gradient-ember);--halo-heading-ink:var(--halo-on-deep);--halo-heading-muted:var(--halo-deep-muted);--halo-heading-accent:var(--halo-warm-accent)}
+:root[data-theme-subarea=oficina-personas],:root[data-theme-subarea=oficina-asistencia],:root[data-theme-subarea=oficina-celulas],:root[data-theme-subarea=oficina-importar-exportar] {--halo-heading-bg:var(--halo-gradient-skyline);--halo-heading-ink:var(--color-text-primary);--halo-heading-muted:var(--color-text-secondary);--halo-heading-accent:var(--color-primary);--halo-backdrop-strength:.2}
+:root[data-theme-area=administracion] {--halo-heading-bg:var(--halo-deep);--halo-heading-ink:var(--halo-on-deep);--halo-heading-muted:var(--halo-deep-muted);--halo-heading-accent:var(--halo-warm-accent);--halo-backdrop-strength:.15}
+:root[data-theme-area=multimedia],:root[data-theme-area=mi-celula] {--halo-heading-bg:var(--halo-gradient-ember);--halo-heading-ink:var(--halo-on-deep);--halo-heading-muted:var(--halo-deep-muted);--halo-heading-accent:var(--halo-warm-accent);--halo-heading-space:2rem}
+:root[data-theme-area=formacion] {--halo-heading-bg:var(--halo-gradient-lumen);--halo-heading-ink:var(--halo-on-paper);--halo-heading-muted:var(--halo-paper-muted);--halo-heading-accent:var(--halo-earth);--halo-heading-space:2.25rem}
+:root[data-theme-area=hdr] {--halo-heading-bg:var(--halo-gradient-lumen);--halo-heading-ink:var(--halo-on-paper);--halo-heading-muted:var(--halo-paper-muted);--halo-heading-accent:var(--halo-earth);--halo-backdrop-color:var(--halo-sky)}
+:root[data-theme-area=recepcion] {--halo-heading-bg:var(--halo-gradient-lumen);--halo-heading-ink:var(--halo-on-paper);--halo-heading-muted:var(--halo-paper-muted);--halo-heading-accent:var(--halo-earth)}
+:root[data-theme-subarea=oficina-nuevos],:root[data-theme-subarea=oficina-cumpleanos] {--halo-heading-bg:var(--halo-gradient-lumen);--halo-heading-ink:var(--halo-on-paper);--halo-heading-muted:var(--halo-paper-muted);--halo-heading-accent:var(--halo-earth)}
+:root[data-theme-subarea=oficina-calidad] {--halo-heading-bg:var(--halo-deep);--halo-backdrop-strength:.12}

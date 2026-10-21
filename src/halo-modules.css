@@ -1,0 +1,128 @@
+/* HALO 2: module atmosphere through themeContext; operational bodies stay solid. */
+.halo-backdrop {position:absolute;inset:0 0 0 auto;width:32%;max-width:330px;pointer-events:none;opacity:var(--halo-backdrop-strength);background:radial-gradient(ellipse at 100% 100%,var(--halo-backdrop-color),transparent 68%);border-radius:inherit;overflow:hidden}
+.halo-backdrop::after {content:'';position:absolute;width:220px;aspect-ratio:1;right:-40px;top:50%;transform:translateY(-50%);border:1px solid currentColor;border-radius:50%;box-shadow:0 0 0 32px color-mix(in srgb,currentColor 12%,transparent),0 0 0 65px color-mix(in srgb,currentColor 8%,transparent)}
+.halo-backdrop[data-halo-intensity=low] {opacity:.15}
+.halo-backdrop[data-halo-intensity=high] {opacity:.65}
+.halo-backdrop[data-halo-tone=sky] {--halo-backdrop-color:var(--halo-sky)}
+.halo-backdrop[data-halo-tone=earth] {--halo-backdrop-color:var(--halo-earth)}
+.halo-backdrop[data-halo-tone=warm] {--halo-backdrop-color:var(--halo-terracotta)}
+.halo-backdrop[data-halo-position=left] {right:auto;left:0;transform:scaleX(-1)}
+.halo-backdrop[data-halo-position=center] {width:65%;max-width:none;right:18%}
+.halo-backdrop[data-halo-variant=wash]::after {display:none}
+.halo-backdrop[data-halo-variant=rings] {background:none}
+.halo-heading {position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius-panel);padding:var(--halo-heading-space);margin-bottom:1.5rem;background:var(--halo-heading-bg);color:var(--halo-heading-ink);border:1px solid var(--color-border);min-width:0}
+.halo-heading-content {position:relative;z-index:1;min-width:0;max-width:92%}
+.halo-heading .eyebrow {color:var(--halo-heading-accent);font-size:var(--type-micro)}
+.halo-heading h1 {color:var(--halo-heading-ink);margin:.625rem 0;font-size:var(--type-page-title);font-weight:600;letter-spacing:-.045em;line-height:1.12;overflow-wrap:anywhere;max-width:30ch}
+.halo-heading p {color:var(--halo-heading-muted);font-size:var(--type-body-small);line-height:1.7;margin:0;max-width:65ch}
+/* Glass variants each carry a solid fallback; only a few contextual surfaces blur. */
+.halo-glass {--glass-bg:var(--halo-glass);--glass-solid:var(--color-surface-elevated);--glass-ink:var(--color-text-primary);--glass-muted:var(--color-text-secondary);background:var(--glass-solid);color:var(--glass-ink);border:1px solid var(--halo-glass-border);box-shadow:var(--shadow-soft);border-radius:var(--radius-panel)}
+.halo-glass--dark {--glass-bg:var(--halo-glass-dark);--glass-solid:var(--halo-glass-dark-solid);--glass-ink:var(--halo-on-deep);--glass-muted:var(--halo-deep-muted)}
+.halo-glass--light {--glass-bg:var(--halo-glass-light);--glass-solid:var(--halo-glass-light-solid);--glass-ink:var(--halo-on-paper);--glass-muted:var(--halo-paper-muted)}
+.halo-glass--warm {--glass-bg:var(--halo-glass-warm);--glass-solid:var(--halo-glass-warm-solid);--glass-ink:var(--halo-glass-warm-ink);--glass-muted:var(--halo-glass-warm-muted)}
+.halo-glass--feature {--glass-bg:var(--halo-glass-dark);--glass-solid:var(--halo-deep);--glass-ink:var(--halo-on-deep);--glass-muted:var(--halo-deep-muted);border-color:var(--halo-earth)}
+.halo-glass>p,.halo-glass .subtle {color:var(--glass-muted)}
+@supports(backdrop-filter:blur(10px)){.halo-glass {background:var(--glass-bg);backdrop-filter:blur(var(--halo-glass-blur))}}
+/* Shared geometry includes an optional real progress ring. */
+.halo-orbit--progress {border:0!important;width:64px;flex:none;aspect-ratio:1}
+.halo-orbit--progress::before,.halo-orbit--progress::after {display:none}
+.halo-orbit--progress svg {display:block;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.halo-orbit-track,.halo-orbit-value {fill:none;stroke:var(--color-border);stroke-width:5}
+.halo-orbit-value {stroke:var(--halo-warm-accent);stroke-linecap:round}
+/* Mixed light/dark compositions; sidebar stays a stable navigation instrument. */
+.sidebar {--color-surface:var(--halo-deep);--color-text-primary:var(--halo-on-deep);--color-text-secondary:var(--halo-deep-muted);--color-primary:var(--halo-warm-accent);--color-primary-soft:var(--halo-earth);--color-surface-hover:var(--halo-earth);--color-border:var(--halo-earth);--color-focus:var(--halo-warm-accent);--muted:var(--halo-deep-muted);--line:var(--halo-earth);--accent:var(--halo-warm-accent);color:var(--halo-on-deep);box-shadow:inset -1px 0 var(--halo-earth)}
+.sidebar .brand-mark {border-color:var(--halo-earth);background:transparent}
+.sidebar .nav-row.selected {box-shadow:inset 2px 0 var(--halo-warm-accent)}
+.sidebar .nav-row>a:hover,.sidebar .nav-children a:hover {color:var(--halo-on-deep)}
+.halo-home .halo-welcome-art {border-radius:50% 50% var(--radius-panel) var(--radius-panel);padding:1.75rem;background:var(--halo-gradient-ember);color:var(--halo-on-deep)}
+.halo-home .halo-welcome-art p {color:var(--halo-on-deep)}
+.halo-home .halo-welcome-art .halo-orbit,.halo-home .halo-welcome-art .halo-orbit i,.halo-home .halo-welcome-art .halo-orbit::before {border-color:color-mix(in srgb,var(--halo-on-deep) 28%,transparent)}
+.halo-home .halo-welcome-art .halo-orbit::after {background:var(--halo-sky)}
+.halo-home .welcome {gap:2rem}
+/* Oficina: the real goal remains prominent; no additional metrics or actions. */
+.work-focus {padding:1.5rem!important;overflow:hidden}
+.work-focus>h2 {font:500 var(--type-micro)/1.5 var(--font-data);text-transform:uppercase;letter-spacing:.08em;margin-top:0}
+.work-focus .work-metrics {grid-template-columns:minmax(230px,1.8fr) repeat(3,minmax(0,1fr));gap:1.5rem;align-items:center}
+.work-focus .work-metrics>div {border:0;background:none;padding:0;min-width:0}
+.work-focus .work-metrics .work-goal {display:flex;align-items:center;gap:1rem;background:var(--halo-deep);color:var(--halo-on-deep);padding:1.25rem;border-radius:var(--radius-panel);grid-column:span 1;justify-content:space-between}
+.work-goal>div:first-child {display:grid;min-width:0}
+.work-goal strong {font:600 clamp(2rem,4vw,3.25rem)/1 var(--font-display);font-stretch:80%;letter-spacing:-.05em}
+.work-focus .work-goal strong {color:var(--halo-on-deep)}
+.work-goal span {font:500 var(--type-micro)/1.6 var(--font-data);color:var(--halo-deep-muted);display:block;margin-top:.75rem}
+.work-focus .work-metrics>div:not(.work-goal) strong {font-size:var(--type-metric);font-weight:550}
+.work-focus progress {height:6px;border-radius:var(--radius-pill);accent-color:var(--color-primary)}
+progress {accent-color:var(--color-primary)}
+progress::-webkit-progress-bar {background:var(--color-surface-hover);border-radius:var(--radius-pill)}
+progress::-webkit-progress-value {background:var(--color-primary);border-radius:var(--radius-pill)}
+progress::-moz-progress-bar {background:var(--color-primary);border-radius:var(--radius-pill)}
+/* Intimate portal, without changing the theme of its data entry surfaces. */
+.leader-heading.halo-heading {margin-bottom:1.25rem;padding:2rem;display:flex;justify-content:space-between;gap:1rem;align-items:center}
+.leader-heading.halo-heading .halo-orbit {width:112px;flex:none;border-color:var(--halo-earth)}
+.leader-heading.halo-heading .halo-orbit i,.leader-heading.halo-heading .halo-orbit::before {border-color:var(--halo-earth)}
+.leader-heading.halo-heading h1 {font-size:clamp(2rem,5vw,3.75rem);font-stretch:80%}
+.leader-current {border-left:3px solid var(--color-primary)}
+.leader-shortcuts .leader-card {border:0;border-bottom:1px solid var(--color-border);border-radius:0;background:none;padding-inline:0}
+.leader-shortcuts .icon {color:var(--color-primary)}
+/* Lower intensity surfaces across the remaining existing modules. */
+.people-page-heading {gap:1rem;align-items:center}
+.people-page-heading>.page-title {flex:1;margin-bottom:0}
+.profile-heading {border-top:2px solid var(--color-primary);padding-top:1.25rem}
+.profile-tabs {border-bottom:1px solid var(--color-border)}
+.context-sheet-header,.contact-sheet-header {background:var(--surface-glass);border-bottom:1px solid var(--color-border)}
+.person-dialog,.cell-dialog,.quick-person-dialog,dialog {color:var(--color-text-primary);background:var(--surface-operational);border-color:var(--color-border);box-shadow:var(--shadow-floating)}
+dialog::backdrop {background:var(--color-overlay)}
+.context-sheet-header .eyebrow,.profile-heading .eyebrow {color:var(--color-primary)}
+.admin-list {gap:0 1.5rem}
+.admin-list>.admin-card {border:0;border-bottom:1px solid var(--color-border);border-radius:0;background:none;margin:0;padding:1rem 0}
+.admin-form>.admin-card {border-width:0 0 1px;border-radius:0;margin:0;padding:1.5rem 0;background:none}
+.admin-card h2 {font-size:var(--type-section-title);letter-spacing:-.03em}
+.admin-card pre {background:var(--color-surface-subtle);padding:1rem;border-left:2px solid var(--color-primary);font-family:var(--font-data)}
+.placeholder {position:relative;background:var(--halo-heading-bg);color:var(--halo-heading-ink);border-color:var(--color-border);overflow:hidden}
+.placeholder p {color:var(--halo-heading-muted)}
+.placeholder-icon {border-radius:50%;border:1px solid var(--color-border);background:var(--color-surface)}
+.section-list a {min-width:0;flex-wrap:wrap}
+.section-list a>span:not(.badge) {min-width:0;overflow-wrap:anywhere}
+.people-empty,.empty-state,.home-empty {border-left:2px solid var(--color-primary);padding:1rem 1.25rem;background:var(--color-surface-subtle);border-radius:0 var(--radius-control) var(--radius-control) 0}
+.skeleton-card {box-shadow:none;background:var(--surface-operational)}
+.skeleton-shape {background:var(--color-surface-hover)}
+.skeleton-heading {border-top:2px solid var(--color-border);padding-top:1rem}
+.button.ghost {background:transparent;color:var(--color-primary);border-color:transparent;box-shadow:none}
+.button:not(.secondary):not(.ghost):not(.danger):not(:disabled) {background:var(--halo-action-bg);color:var(--halo-action-ink)}
+.button:not(.secondary):not(.ghost):not(.danger):hover:not(:disabled) {background:var(--halo-action-hover)}
+.button.ghost:hover:not(:disabled) {background:var(--color-primary-soft)}
+.button.danger {background:var(--color-danger);color:var(--color-surface);border-color:var(--color-danger);box-shadow:none}
+.button.danger:hover:not(:disabled) {background:var(--color-danger);text-decoration:underline}
+:root[data-theme-area=formacion] .halo-heading h1,:root[data-theme-area=hdr] .halo-heading h1,:root[data-theme-area=multimedia] .halo-heading h1 {font-size:clamp(2rem,4vw,3.5rem);font-stretch:80%}
+:root[data-theme-area=hdr] .halo-backdrop::after {border-radius:50% 50% 0 50%;transform:translateY(-50%) rotate(-25deg)}
+:root[data-theme-area=administracion] .halo-backdrop::after {box-shadow:none;width:120px;border-radius:0;border-width:0 1px 1px 0}
+@media(max-width:1100px){.work-focus .work-metrics {grid-template-columns:repeat(2,minmax(0,1fr))}.work-focus .work-metrics .work-goal {grid-column:span 2}.people-page-heading {flex-wrap:wrap}.people-page-heading>.page-title {flex-basis:100%}}
+@media(max-width:1024px){.section-list {grid-template-columns:1fr}}
+@media(max-width:760px){
+ .halo-heading {padding:1.125rem;margin-bottom:1.125rem;border-radius:var(--radius-panel)}
+ .halo-heading-content {max-width:100%}
+ .halo-heading h1 {font-size:clamp(1.625rem,6vw,2rem);max-width:24ch}
+ .halo-heading p {font-size:var(--type-body-small)}
+ .halo-backdrop {width:24%;opacity:.12}
+ .halo-backdrop::after {width:140px}
+ .halo-home .welcome {position:relative;padding:1.5rem;gap:0}
+ .halo-home .halo-welcome-art {position:absolute;right:1rem;bottom:1.25rem;width:80px;height:80px;margin:0;padding:.5rem;border-radius:50%;pointer-events:none}
+ .halo-home .halo-welcome-art p {display:none}
+ .halo-home .halo-welcome-art .halo-orbit {width:58px;margin:0}
+ .halo-home .welcome-identity {padding-right:80px}
+ .halo-home .halo-welcome-copy h1 {font-size:clamp(2.75rem,11vw,3.75rem)}
+ .work-focus {padding:1rem!important}
+ .work-focus .work-metrics {gap:1rem}
+ .work-focus .work-metrics .work-goal {grid-column:span 2;padding:1rem}
+ .work-focus .work-goal strong {font-size:2.5rem}
+ .work-focus .work-metrics>div:not(.work-goal) strong {font-size:1.75rem}
+ .leader-heading.halo-heading {padding:1.25rem;gap:.75rem}
+ .leader-heading.halo-heading .halo-orbit {width:75px}
+ .leader-heading.halo-heading h1 {font-size:2.25rem}
+ .leader-current {padding:1.25rem}
+ .halo-glass {backdrop-filter:none;background:var(--glass-solid)}
+ .admin-form>.admin-card {padding:1.25rem 0}
+ .people-page-heading .people-heading-actions {width:100%}
+ .profile-heading {padding-top:1rem}
+ :root[data-theme-area=formacion] .halo-heading h1,:root[data-theme-area=hdr] .halo-heading h1,:root[data-theme-area=multimedia] .halo-heading h1 {font-size:2rem}
+}
+@media(forced-colors:active){.halo-backdrop {display:none}.halo-glass,.halo-heading {border:1px solid CanvasText;background:Canvas;color:CanvasText}.halo-heading h1,.halo-heading p,.halo-heading .eyebrow {color:CanvasText}.halo-orbit-value {stroke:Highlight}}

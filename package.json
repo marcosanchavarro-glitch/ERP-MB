@@ -22,6 +22,7 @@
     "followup:rebuild": "node --env-file-if-exists=.env scripts/rebuild-followup.mjs",
     "start:render": "node scripts/start-render.mjs",
     "test:skeleton": "node --test tests/skeleton.test.mjs && node tests/skeleton-browser.mjs",
+    "test:halo2": "node --test tests/halo2.test.mjs tests/halo.test.mjs tests/skeleton.test.mjs && node --env-file-if-exists=.env tests/halo2-browser.mjs",
     "test:halo": "node --test tests/halo.test.mjs tests/skeleton.test.mjs && node --env-file-if-exists=.env tests/halo-browser.mjs",
     "test:theme": "node --env-file-if-exists=.env tests/theme-browser.mjs"
   },
