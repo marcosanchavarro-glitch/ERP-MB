@@ -11,7 +11,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.
 const browser=await chromium.launch({headless:true,channel:process.env.BROWSER_CHANNEL||'msedge'}),page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(12000);
 let current='a',mode='success',gate=Promise.resolve(),release=()=>{},profileGate=Promise.resolve(),releaseProfile=()=>{};
 const hold=()=>{gate=new Promise(r=>release=r);};
-const user=()=>({id:current,username:'cuenta-'+current,access:{allModules:true,paths:[],officeWork:{}}});
+const user=()=>({id:current,username:'cuenta-'+current,access:{paths:[{path:'/oficina',label:'Oficina'},{path:'/oficina/personas',label:'Personas'},{path:'/oficina/celulas',label:'Células'},{path:'/oficina/dashboard',label:'Dashboard'}],officeWork:{}}});
 const person=owner=>({...blankPerson(),id:'12345678-1234-4234-8234-123456789012',names:owner==='a'?'NombrePrivadoAnterior':'PersonaActual',lastNames:'Prueba',completeness:{percent:0,complete:false,missing:[]},capabilities:{history:false,edit:false,account:false}});
 await page.route('**/api/**',async route=>{const path=new URL(route.request().url()).pathname;let body={},status=200;
  if(path==='/api/installation')body={};

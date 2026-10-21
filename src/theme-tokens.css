@@ -157,3 +157,46 @@
 :root[data-theme-area=recepcion] {--halo-heading-bg:var(--halo-gradient-lumen);--halo-heading-ink:var(--halo-on-paper);--halo-heading-muted:var(--halo-paper-muted);--halo-heading-accent:var(--halo-earth)}
 :root[data-theme-subarea=oficina-nuevos],:root[data-theme-subarea=oficina-cumpleanos] {--halo-heading-bg:var(--halo-gradient-lumen);--halo-heading-ink:var(--halo-on-paper);--halo-heading-muted:var(--halo-paper-muted);--halo-heading-accent:var(--halo-earth)}
 :root[data-theme-subarea=oficina-calidad] {--halo-heading-bg:var(--halo-deep);--halo-backdrop-strength:.12}
+/* HALO 3: continuous atmosphere, independent from operational/semantic colors. */
+:root {
+  --halo-atmosphere-sky:#bfd7e4b8;
+  --halo-atmosphere-warm:#f0b28b99;
+  --halo-atmosphere-earth:#e0bd9299;
+  --halo-atmosphere:radial-gradient(ellipse 90% 80% at 0% 0%,var(--halo-atmosphere-sky),transparent 85%),radial-gradient(ellipse 85% 85% at 105% 45%,var(--halo-atmosphere-warm),transparent 85%),radial-gradient(ellipse 90% 75% at 25% 110%,var(--halo-atmosphere-earth),transparent 85%),var(--color-background);
+  --surface-base:#fefcf8ed;
+  --surface-soft:#fffdf9b8;
+  --surface-glass:#fffdf9b8;
+  --surface-operational:var(--color-surface);
+  --surface-feature:#fff8ef70;
+  --halo-navigation-surface:#f8f5eef0;
+  --halo-highlight:#f5dfc6d9;
+  --halo-highlight-ink:var(--color-text-primary);
+  --halo-highlight-muted:var(--color-text-secondary);
+  --halo-motion:220ms ease;
+  --halo-chart-0:var(--color-primary);
+  --halo-chart-1:var(--color-info);
+  --halo-chart-2:var(--color-success);
+  --halo-chart-3:var(--color-warning);
+  --halo-tooltip-bg:var(--halo-earth);
+  --halo-tooltip-ink:var(--halo-on-deep);
+}
+:root[data-theme=dark] {
+  --halo-atmosphere-sky:#52708555;
+  --halo-atmosphere-warm:#b25b3559;
+  --halo-atmosphere-earth:#8b633e4d;
+  --surface-base:#26211def;
+  --surface-soft:#302923bc;
+  --surface-glass:#302923bc;
+  --surface-feature:#3d2c235e;
+  --halo-navigation-surface:#2b241ff2;
+  --halo-highlight:#664632b8;
+}
+:root[data-theme-area=oficina],:root[data-theme-area=recepcion] {--halo-atmosphere-earth:#d98a3c33}
+:root[data-theme-area=multimedia],:root[data-theme-area=mi-celula] {--halo-atmosphere-warm:#c85a2845}
+:root[data-theme-area=administracion] {--halo-atmosphere-warm:#d98a3c26}
+:root[data-theme-area] {
+  --halo-heading-bg:var(--surface-feature);
+  --halo-heading-ink:var(--color-text-primary);
+  --halo-heading-muted:var(--color-text-secondary);
+  --halo-heading-accent:var(--color-primary);
+}

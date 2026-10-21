@@ -8,6 +8,7 @@ import {authorizeLeaderAccount} from '../server/identity/leader-accounts.mjs';
 import {blankPerson} from '../src/domain/person.js';
 import {today} from '../src/domain/cell.js';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH||'playwright');
+const outputDir=process.env.HALO_CAPTURE_DIR||'test-results/halo2';
 const x=await setup();for(let i=0;i<6;i++)await x.record(i);
 await x.f.pool.query('UPDATE users SET username=$2 WHERE id=$1',[x.user.id,'halo.prueba']);x.user.username='halo.prueba';
 await x.f.people.save({...blankPerson(),names:'Lucía',lastNames:'Prueba visual',sex:'MUJER',phone:'1112345678'},{actorId:x.user.id});
@@ -16,9 +17,9 @@ const membership=(await x.f.pool.query('SELECT id FROM cell_memberships WHERE "p
 await x.cells.move(x.c.id,{kind:'ROLE',personId:x.p.id,membershipId:membership.id,role:'LEADER',date:today(),version:(await x.cells.get(x.c.id)).version},x.ctx);
 const leader=await account(x.f,[]);await authorizeLeaderAccount(x.f.pool,{userId:leader.id,personId:x.p.id});
 const server=await testServer(x.f),browser=await chromium.launch({headless:true,channel:process.env.BROWSER_CHANNEL||'msedge'}),context=await browser.newContext({reducedMotion:'reduce'}),errors=[],shots=[];let page=await context.newPage();
-page.setDefaultTimeout(25000);page.on('pageerror',e=>errors.push(e.message));await mkdir('test-results/halo2',{recursive:true});
+page.setDefaultTimeout(25000);page.on('pageerror',e=>errors.push(e.message));await mkdir(outputDir,{recursive:true});
 const theme=async value=>{const p=page.locator('.theme-picker:visible');if(!await p.evaluate(e=>e.open))await p.locator('summary').click();await p.getByLabel('Tema de la interfaz').selectOption(value);await p.getByLabel('Tema de la interfaz').press('Escape');};
-const shot=async name=>{const path='test-results/halo2/'+name+'.png';await page.screenshot({path,fullPage:true,animations:'disabled'});shots.push(path);};
+const shot=async name=>{const path=outputDir+'/'+name+'.png';await page.screenshot({path,fullPage:true,animations:'disabled'});shots.push(path);};
 const screens=[['inicio','/','.halo-home'],['oficina','/oficina/trabajo','.work-focus'],['personas','/oficina/personas','.people-table'],['asistencia','/oficina/asistencia?month='+x.start.slice(0,7),'.attendance-month-table'],['administracion','/administracion/usuarios','.admin-list'],['celulas','/oficina/celulas','.cells-table'],['seguimiento','/oficina/seguimiento','.followup-row'],['nuevos','/oficina/nuevos','.newcomers'],['citas','/oficina/citas','.cita-list'],['cumpleanos','/oficina/cumpleanos','.insight-filters'],['calidad','/oficina/calidad','.insight-filters'],['importador','/oficina/importar-exportar','.matrix-import'],['formacion','/formacion','.placeholder'],['multimedia','/multimedia','.placeholder'],['hdr','/hdr','.placeholder'],['recepcion','/recepcion','.newcomers']];
 try{
  await page.goto(server.base);await page.getByLabel('Usuario',{exact:true}).fill(x.user.username);await page.getByLabel('Contraseña',{exact:true}).fill(x.user.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.locator('#login-form').waitFor({state:'detached'});
@@ -36,5 +37,5 @@ try{
  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Alternar navegación'}).click();await shot('dark-navegacion-mobile');await page.keyboard.press('Escape');assert.equal(await page.getByRole('button',{name:'Alternar navegación'}).evaluate(e=>e===document.activeElement),true);
  await theme('system');await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>document.documentElement.dataset.theme==='light');await page.emulateMedia({colorScheme:'dark'});await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
  await page.setViewportSize({width:640,height:900});await page.evaluate(()=>document.documentElement.style.fontSize='200%');await page.goto(server.base+'/#/oficina/trabajo');await page.locator('.work-focus').waitFor();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'office text zoom overflow');await page.evaluate(()=>document.documentElement.style.fontSize='');
- assert.deepEqual(errors,[]);await writeFile('test-results/halo2/screenshots.json',JSON.stringify(shots,null,2));console.log('HALO 2 PASS: 17 vistas, 7 anchos, Light/Dark/Sistema, tablas sólidas, progreso real, portal, Ficha, navegación, zoom y consola limpia.');
+ assert.deepEqual(errors,[]);await writeFile(outputDir+'/screenshots.json',JSON.stringify(shots,null,2));console.log('HALO 2 PASS: 17 vistas, 7 anchos, Light/Dark/Sistema, tablas sólidas, progreso real, portal, Ficha, navegación, zoom y consola limpia.');
 }catch(e){await shot('failure');console.error('URL:',page.url());throw e;}finally{await browser.close();await server.close();await x.f.close();}
