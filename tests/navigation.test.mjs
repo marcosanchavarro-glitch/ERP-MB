@@ -8,12 +8,12 @@ test('Áreas, estados y rutas únicas',()=>{
  const nodes=navigation.flatMap(area=>[area,...area.children]);
  assert.equal(new Set(nodes.map(n=>n.path)).size,nodes.length);
  assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length);
- for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','oficina-importar-exportar','oficina-citas','oficina-dashboard','oficina-trabajo','recepcion','administracion-usuarios','administracion-roles','administracion-auditoria'].includes(node.id)?'ACTIVE':['oficina','administracion'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
+ for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','oficina-importar-exportar','oficina-citas','oficina-dashboard','oficina-trabajo','recepcion','administracion-usuarios','administracion-roles','administracion-auditoria','territorio-mapa'].includes(node.id)?'ACTIVE':['oficina','administracion','territorio'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
  assert.deepEqual(Object.keys(statuses),['PLANNED','DEVELOPMENT','ACTIVE']);
 });
 test('Todos los enlaces internos resuelven y los módulos pendientes tienen placeholder',()=>{
  const html=[home(),sidebar(resolveRoute('/'), 'oficina'),officeLanding(navigation.find(node=>node.id==='oficina'))];
- for(const area of navigation.slice(1)) for(const section of [area,...area.children]){if(section.status!=='PLANNED')continue;const view=placeholder({area,section});assert.match(view,/Este módulo todavía no está disponible/);html.push(view);}
+ for(const area of navigation.slice(1)) for(const section of [area,...area.children]){if(section.status!=='PLANNED')continue;const view=placeholder({area,section});assert.match(view,/Las herramientas de esta sección todavía no están disponibles/);html.push(view);}
  for(const match of html.join('').matchAll(/href="#([^\"]+)"/g)) assert.ok(resolveRoute(match[1]),match[1]);
  assert.equal(resolveRoute('/inexistente'),null);
 });
@@ -33,7 +33,7 @@ test('Preferencias serializables cambian iconos de áreas y subsecciones y permi
  const office=changed.find(node=>node.id==='oficina');
  const people=office.children.find(node=>node.id==='oficina-personas');
  assert.match(moduleIcon(office),/data-icon="book"/);
- assert.match(home(changed),/class="area-icon tone-0"><svg[^>]+data-icon="book"/);
+ assert.match(sidebar(resolveRoute('/'),'oficina',changed),/href="#\/oficina"[^>]*><svg[^>]+data-icon="book"/);
  assert.match(sidebar({area:office,section:people},'oficina',changed),/href="#\/oficina\/personas"[^>]*><svg[^>]+data-icon="spark"/);
  assert.equal(resolveRoute('/oficina/personas',changed).section.icon,'spark');
  assert.match(placeholder({area:office,section:people}),/class="placeholder-icon"><svg[^>]+data-icon="spark"/);

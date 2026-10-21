@@ -1,3 +1,4 @@
+import {territoryRoute,mountTerritory,unmountTerritory} from './territory/controller.js';
 import {canLeaveContacts} from './office-work/contacts.js';
 import {workRoute,mountWork,unmountWork,canLeaveWork} from './office-work/controller.js';
 import {importRoute,mountImport,unmountImport,canLeaveImport} from './imports/controller.js';
@@ -67,7 +68,7 @@ function render(moveFocus = false,refreshContent = true) {
   app.querySelector('[data-action="toggle-nav"]').setAttribute('aria-expanded',String(mobile()?mobileOpen:!collapsed));
   return;
  }
- unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
+ unmountTerritory();unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
  const initialContent=leaderContext?'':route ? route.section.path==='/'?home(visibleNavigation(),sessionState.user):placeholder({...route,area:{...route.area,children:route.area.children.filter(c=>permittedOther(c.path))},section:route.section===route.area?{...route.section,children:route.section.children.filter(c=>permittedOther(c.path))}:route.section}):`${pageTitle('Navegación','No encontramos esta sección.','Podés volver al inicio y explorar las áreas del ERP.')}${buttonLink('/','Volver al inicio')}`;
  if(app.querySelector('.shell')?.dataset.sessionUser===sessionState.user.id){
   render(false,false);app.querySelector('.topbar').innerHTML=topbar(route,sessionState.user);const previousMain=app.querySelector('#main'),nextMain=previousMain.cloneNode(false);previousMain.replaceWith(nextMain);nextMain.innerHTML=initialContent;
@@ -84,6 +85,7 @@ function render(moveFocus = false,refreshContent = true) {
  if(leaderContext){if(leader)mountLeader(main,leader);else main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a>';}
  else if(!allowed)main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p>';
  else if(path==='/'&&main.querySelector('[data-home-work]'))mountOffice(main.querySelector('[data-home-work]'),'home',{omitPaths:[...main.querySelectorAll('.halo-portal')].map(a=>a.getAttribute('href').slice(1))});
+ else if(territoryRoute(path))mountTerritory(main);
  else if(work)mountWork(main,work);
  else if(path==='/oficina'&&sessionState.user.access?.officeWork?.['contactos.ver'])mountWork(main,{kind:'personal',search:''});
  else if(matrixImport)mountImport(main,matrixImport);
@@ -104,7 +106,7 @@ app.addEventListener('click', event => {
  const expand = event.target.closest('[data-expand]');
  if(expand) {expanded = expanded===expand.dataset.expand?null:expand.dataset.expand; collapsed=false; render(false,false); document.querySelector(`[data-expand="${expand.dataset.expand}"]`).focus(); return;}
  const action = event.target.closest('[data-action]')?.dataset.action;
- if(action==='logout'){if(canLeaveContacts()&&canLeaveWork()&&canLeaveImport()&&canLeaveAppointments()&&canLeaveNewcomers()&&canLeaveIntegration()&&canLeaveAdmin()&&canLeaveFollowup()&&canLeavePeople()&&canLeaveCells()&&canLeaveMeetings()&&canLeaveLeader()&&canLeaveQuick())logout().then(()=>{unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closeQuickPerson();closePersonContext();closeCellContext();app.innerHTML='';showLogin(afterLogin);}).catch(error=>window.alert(error.message));return;}
+ if(action==='logout'){if(canLeaveContacts()&&canLeaveWork()&&canLeaveImport()&&canLeaveAppointments()&&canLeaveNewcomers()&&canLeaveIntegration()&&canLeaveAdmin()&&canLeaveFollowup()&&canLeavePeople()&&canLeaveCells()&&canLeaveMeetings()&&canLeaveLeader()&&canLeaveQuick())logout().then(()=>{unmountTerritory();unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closeQuickPerson();closePersonContext();closeCellContext();app.innerHTML='';showLogin(afterLogin);}).catch(error=>window.alert(error.message));return;}
  if(action==='toggle-nav') {if(mobile()) mobileOpen=!mobileOpen; else collapsed=!collapsed; render(false,false); document.querySelector(mobile()?'.sidebar .brand':'[data-action="toggle-nav"]').focus();}
  if(action==='close') closeMenu();
  if(event.target.closest('a[href^="#/"]') && mobileOpen) {mobileOpen=false; render(false,false);}

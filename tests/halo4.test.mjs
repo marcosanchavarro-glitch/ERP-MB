@@ -7,7 +7,7 @@ test('HALO 4: Inicio agrupa destinos disponibles sin repetir navegación editori
  const html=home(createNavigation(),{username:'Marcos'});
  assert.doesNotMatch(html,/Tu próximo paso|Espacios para servir|Cada área, un propósito|home-tool-number|area-item/);
  const paths=[...html.matchAll(/class="halo-portal" href="#([^"]+)"/g)].map(m=>m[1]);
- assert.equal(paths.length,15);assert.equal(new Set(paths).size,paths.length);
+ assert.equal(paths.length,16);assert.equal(new Set(paths).size,paths.length);assert.ok(paths.includes('/territorio/mapa'));
  assert.ok(paths.includes('/oficina/personas'));assert.ok(!paths.includes('/comedor'));assert.match(html,/<details class="home-more">/);
  assert.match(html,/data-home-work/);
 });
