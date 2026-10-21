@@ -74,7 +74,7 @@ function render(moveFocus = false,refreshContent = true) {
   return;
  }
  unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
- const initialContent=route ? route.section.path==='/'?home(visibleNavigation()):placeholder({...route,area:{...route.area,children:route.area.children.filter(c=>permittedOther(c.path))},section:route.section===route.area?{...route.section,children:route.section.children.filter(c=>permittedOther(c.path))}:route.section}):`${pageTitle('Navegación','No encontramos esta sección.','Podés volver al inicio y explorar las áreas del ERP.')}${buttonLink('/','Volver al inicio')}`;
+ const initialContent=route ? route.section.path==='/'?home(visibleNavigation(),sessionState.user):placeholder({...route,area:{...route.area,children:route.area.children.filter(c=>permittedOther(c.path))},section:route.section===route.area?{...route.section,children:route.section.children.filter(c=>permittedOther(c.path))}:route.section}):`${pageTitle('Navegación','No encontramos esta sección.','Podés volver al inicio y explorar las áreas del ERP.')}${buttonLink('/','Volver al inicio')}`;
  if(app.querySelector('.shell')?.dataset.sessionUser===sessionState.user.id){
   render(false,false);app.querySelector('.topbar').innerHTML=topbar(route,sessionState.user);const previousMain=app.querySelector('#main'),nextMain=previousMain.cloneNode(false);previousMain.replaceWith(nextMain);nextMain.innerHTML=initialContent;
  }else{

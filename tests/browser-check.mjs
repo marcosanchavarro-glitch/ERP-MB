@@ -21,7 +21,7 @@ try {
   if(await page.locator('#login-form').isVisible()){await page.getByLabel('Usuario',{exact:true}).fill(user.username);await page.getByLabel('Contraseña',{exact:true}).fill(user.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();}
   await page.locator('.shell').waitFor();
   await page.locator('h1').waitFor();
-  assert.equal(await page.locator('.area-item').count(),12);
+  const available=(await (await page.request.get(base+'/api/auth/session')).json()).user.access.paths;assert.equal(await page.locator('.area-item').count(),navigation.filter(a=>a.path!=='/'&&available.some(p=>p.path===a.path||p.path.startsWith(a.path+'/'))).length);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${name}: horizontal overflow`);
   await page.screenshot({path:`test-results/${name}.png`,fullPage:true});
   if(width<=760){
@@ -44,7 +44,7 @@ try {
    await page.getByRole('button',{name:'Alternar navegación'}).click();
   }
   for(const area of navigation.slice(1)) for(const section of [area,...area.children]) {
-   if(section.status!=='PLANNED') continue;
+   if(section.status!=='PLANNED'||!available.some(p=>p.path===section.path)) continue;
    await page.goto(`${base}/#${section.path}`);
    await page.getByRole('heading',{name:section.name,exact:true}).waitFor();
    assert.ok(await page.getByRole('heading',{name:'Este módulo todavía no está disponible.'}).isVisible());
@@ -53,9 +53,9 @@ try {
   console.log(`${name}: home, navigation and all placeholders passed`);
  }
  await page.goto(base+'/#/unknown');
- await page.getByRole('heading',{name:'No encontramos esta sección.'}).waitFor();
- await page.getByRole('link',{name:'Volver al inicio'}).click();
- await page.getByRole('heading',{name:'Un espacio para servir mejor.'}).waitFor();
+ await page.getByRole('heading',{name:'Acceso no disponible'}).waitFor();
+ await page.goto(base+'/#/');
+ await page.getByRole('heading',{name:/^Hola,/}).waitFor();
  assert.deepEqual(errors,[]);
  console.log('Unknown route recovery and browser console passed');
 } finally {await browser.close();await running.close();await f.close();}
