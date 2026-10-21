@@ -15,7 +15,7 @@ async function save(){await page.getByRole('button',{name:'Guardar célula',exac
 try{
  await mkdir('test-results/territorio',{recursive:true});await goto();await page.getByLabel('Usuario',{exact:true}).fill(user.username);await page.getByLabel('Contraseña',{exact:true}).fill(user.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.getByRole('heading',{name:'Ubicación y compatibilidad',exact:true}).waitFor();await page.getByText('Sin coordenadas',{exact:true}).waitFor();
  await goto(true);await page.getByLabel('Dirección',{exact:true}).fill('Lugar de reunión de prueba');await page.getByLabel('País',{exact:true}).fill('Argentina');await page.getByLabel('Latitud',{exact:true}).fill('-34.6');await page.getByLabel('Longitud',{exact:true}).fill('-58.4');await page.getByLabel('Edad mínima recomendada',{exact:true}).fill('18');await page.getByLabel('Edad máxima recomendada',{exact:true}).fill('35');await page.getByLabel('Radio de referencia (metros)',{exact:true}).fill('750');await save();await page.getByText(/Pendientes de verificar/).waitFor();
- await goto(true);await page.getByLabel('Verificación de coordenadas',{exact:true}).selectOption('VERIFIED');await save();assert.equal((await cells.get(c.id)).coordinateStatus,'VERIFIED');
+ await goto(true);await page.getByRole('button',{name:'Ubicar manualmente',exact:true}).click();await page.locator('.location-preview.leaflet-container').waitFor();await page.getByRole('button',{name:'Confirmar punto para guardar',exact:true}).click();await save();assert.equal((await cells.get(c.id)).coordinateStatus,'VERIFIED');
  await goto(true);await page.getByLabel('Dirección',{exact:true}).fill('Otro lugar de prueba');await save();await page.getByText(/Pendientes de verificar/).waitFor();
  for(const mode of ['light','dark']){
   await page.evaluate(mode=>{localStorage.setItem('erp.theme',mode);window.dispatchEvent(new StorageEvent('storage',{key:'erp.theme',newValue:mode}));},mode);
@@ -30,6 +30,6 @@ try{
    }
   }
  }
- await goto(true);await page.getByLabel('Latitud',{exact:true}).fill('');await page.getByLabel('Longitud',{exact:true}).fill('');await page.getByLabel('Verificación de coordenadas',{exact:true}).selectOption('');await page.getByLabel('Edad mínima recomendada',{exact:true}).fill('');await page.getByLabel('Edad máxima recomendada',{exact:true}).fill('');await page.getByLabel('Sin restricción etaria',{exact:true}).selectOption('true');await save();await page.getByText('Sin coordenadas',{exact:true}).waitFor();assert.equal((await cells.get(c.id)).ageUnrestricted,true);
+ await goto(true);await page.getByLabel('Latitud',{exact:true}).fill('');await page.getByLabel('Longitud',{exact:true}).fill('');await page.getByLabel('Edad mínima recomendada',{exact:true}).fill('');await page.getByLabel('Edad máxima recomendada',{exact:true}).fill('');await page.getByLabel('Sin restricción etaria',{exact:true}).selectOption('true');await save();await page.getByText('Sin coordenadas',{exact:true}).waitFor();assert.equal((await cells.get(c.id)).ageUnrestricted,true);
  assert.deepEqual(errors,[]);console.log('Territorio: edición, persistencia, verificación, limpieza, teclado, Light/Dark, 320/360/390/430/768/1440: PASS');
 }finally{await browser.close();await server.close();await f.close();}

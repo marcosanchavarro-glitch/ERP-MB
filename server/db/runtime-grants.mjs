@@ -4,6 +4,7 @@ export async function grantRuntime(pool,role){
  GRANT SELECT,INSERT,UPDATE ON people TO ${role};
  GRANT SELECT,INSERT ON person_events TO ${role};
  GRANT SELECT,INSERT,UPDATE ON cells,cell_memberships TO ${role};
+ GRANT SELECT,INSERT,UPDATE ON institutional_sites,geocoding_cache,geocoding_usage TO ${role};
  GRANT SELECT,INSERT ON cell_events,cell_operations TO ${role};
  GRANT SELECT,INSERT ON cell_schedules,meeting_events TO ${role};
  GRANT SELECT,INSERT,UPDATE ON cell_meetings,meeting_attendance TO ${role};

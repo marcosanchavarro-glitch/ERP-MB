@@ -3,6 +3,9 @@ import {DomainError} from '../core/errors.mjs';
 import {territoryScope} from './policy.mjs';
 import {cellCapabilities} from '../cells/policy.mjs';
 import {tileProvider} from './provider.mjs';
+import {centralSite} from './locations.mjs';
+import {referenceView} from './geocoding.mjs';
+import {scopeFor} from '../identity/authorization.mjs';
 const validCoordinates='latitude IS NOT NULL AND longitude IS NOT NULL AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180';
 export function territoryRouter(pool,{provider=tileProvider()}={}){
  const router=Router();
@@ -33,8 +36,9 @@ export function territoryRouter(pool,{provider=tileProvider()}={}){
   try{await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
    const totals=(await db.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE NOT (${validCoordinates}))::int AS "missingLocation" FROM cells WHERE ${filter}`,values)).rows[0];
    const pages=Math.max(1,Math.ceil(totals.total/pageSize)),page=Math.min(pages,Number(q.page)||1);
-   const items=(await db.query(`SELECT id,"displayCode",status,gender,locality,"recommendedAgeMin","recommendedAgeMax","ageUnrestricted",CASE WHEN ${validCoordinates} THEN latitude ELSE NULL END AS latitude,CASE WHEN ${validCoordinates} THEN longitude ELSE NULL END AS longitude,CASE WHEN ${validCoordinates} THEN coalesce("coordinateStatus",'PENDING') ELSE NULL END AS "coordinateStatus","coverageRadiusMeters" FROM cells WHERE ${filter} ORDER BY "groupCode",generation,gender,id LIMIT ${bind(pageSize)} OFFSET ${bind((page-1)*pageSize)}`,values)).rows;
-   result={...totals,page,pageSize,pages,provider,items:items.map(c=>({...c,canOpenCell:cellCapabilities(req.user,c.id).ver}))};await db.query('COMMIT');
+   const items=(await db.query(`SELECT id,"displayCode",status,gender,locality,"recommendedAgeMin","recommendedAgeMax","ageUnrestricted",CASE WHEN ${validCoordinates} THEN latitude ELSE NULL END AS latitude,CASE WHEN ${validCoordinates} THEN longitude ELSE NULL END AS longitude,CASE WHEN ${validCoordinates} THEN coalesce("coordinateStatus",'PENDING') ELSE NULL END AS "coordinateStatus","coverageRadiusMeters","locationVerification"->>'accuracy' AS "locationAccuracy" FROM cells WHERE ${filter} ORDER BY "groupCode",generation,gender,id LIMIT ${bind(pageSize)} OFFSET ${bind((page-1)*pageSize)}`,values)).rows;
+   const central=await centralSite(db);central.locationAccuracy=central.verification?.accuracy||null;delete central.verification;
+   result={...totals,page,pageSize,pages,provider,central,reference:referenceView(),canManageSite:scopeFor(req.user,'admin.usuarios.gestionar').all,canManageCells:scopeFor(req.user,'celulas.editar').all,items:items.map(c=>({...c,canOpenCell:cellCapabilities(req.user,c.id).ver}))};await db.query('COMMIT');
   }catch(error){await db.query('ROLLBACK');throw error;}finally{db.release();}
   res.json(result);
  });

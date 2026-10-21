@@ -1,4 +1,6 @@
 import {territoryRouter} from './territory/http.mjs';
+import {locationsRouter} from './territory/locations.mjs';
+import {createGeocoder} from './territory/geocoding.mjs';
 import {tileProvider} from './territory/provider.mjs';
 import {officeWorkRouter} from './office-work/http.mjs';
 import {importRouter} from './imports/http.mjs';
@@ -61,6 +63,7 @@ export async function createAppServer(people,{pool,config}) {
  app.use('/api',express.json({limit:'32kb',strict:true}));
  const sessionStore=await installIdentity(app,pool,config);
  app.use('/api/territory',territoryRouter(pool,{provider:mapProvider}));
+ app.use('/api/locations',locationsRouter(pool,{provider:mapProvider,geocoder:createGeocoder(pool,config.geocoding)}));
  app.use('/api/imports',importRouter(pool,{secret:config.sessionSecret}));
  app.use('/api/appointments',appointmentsRouter(pool,{timezone:config.timezone}));
  app.use('/api/office-work',officeWorkRouter(pool,{timezone:config.timezone}));

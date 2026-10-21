@@ -1,4 +1,5 @@
 import {DomainError} from '../core/errors.mjs';
+import {locationConfirmation} from '../territory/geocoding.mjs';
 import {scheduleChanged,cellClosed} from '../meetings/schedules.mjs';
 import {transaction} from '../db/pool.mjs';
 import {appendAudit} from '../audit/repository.mjs';
@@ -10,18 +11,22 @@ export {cellAccess,cellCapabilities} from './policy.mjs';
 export function createCellsService(pool){
  async function run(fn){try{return await transaction(pool,fn);}catch(e){if(e.code==='23505')fail('El código activo o la pertenencia de la persona ya está en uso. Recargá y revisá la operación.',409);if(e.code==='23514'||e.code==='23503')fail('La operación no cumple las restricciones de integridad.',409);throw e;}}
  async function save(input,{id,user,requestId,client}={}){
-  shape(input,['cell','version']);cellAccess(user,id?'celulas.editar':'celulas.crear',id);
+  shape(input,['cell','version','locationConfirmation']);cellAccess(user,id?'celulas.editar':'celulas.crear',id);
   const {cell,errors}=validateCell(input.cell);if(Object.keys(errors).length)throw new DomainError(422,'Revisá los datos de la célula.',{fields:errors});
   const execute=async db=>{
    let old=null;if(id){await r.lockCells(db,[id]);old=await r.get(db,id);version(old,input.version);active(old);if(old.openedDate&&cell.openedDate!==old.openedDate)fail('La fecha de apertura conocida se conserva.');if(!old.openedDate&&cell.openedDate){const earliest=await r.earliestStart(db,id);if(earliest&&cell.openedDate>earliest)fail('La apertura no puede ser posterior a la primera pertenencia.');}}
    // Older internal clients omit territory fields; an unrelated edit must preserve them.
    if(old)for(const key of cellCompatibilityKeys)if(!Object.hasOwn(input.cell,key))cell[key]=old[key];
    const locationChanged=cellLocationKeys.some(k=>(old?.[k]??null)!==(cell[k]??null));
-   if(old?.coordinateStatus==='VERIFIED'&&locationChanged)cell.coordinateStatus=cell.latitude==null?null:'PENDING';
+   const verification=input.locationConfirmation?await locationConfirmation(db,cell,input.locationConfirmation,user):null;
+   if(verification)cell.coordinateStatus='VERIFIED';
+   else if(old?.coordinateStatus==='VERIFIED'&&locationChanged)cell.coordinateStatus=cell.latitude==null?null:'PENDING';
    const checked=validateCell(cell);if(Object.keys(checked.errors).length)throw new DomainError(422,'Revisá la ubicación y compatibilidad.',{fields:checked.errors});
    Object.assign(cell,checked.cell);
    const saved=await r.saveCell(db,cell,id,locationChanged||(old?.coordinateStatus??null)!==(cell.coordinateStatus??null)),changes=cellFields.filter(f=>(old?.[f.key]??null)!==cell[f.key]).map(f=>({field:f.key,before:old?.[f.key]??null,after:cell[f.key]}));
    if((saved.locationUpdatedAt??null)!==(old?.locationUpdatedAt??null))changes.push({field:'locationUpdatedAt',before:old?.locationUpdatedAt??null,after:saved.locationUpdatedAt});
+   const locationVerification=verification||(cell.coordinateStatus==='VERIFIED'&&!locationChanged?old?.locationVerification:null)||null;
+   if(JSON.stringify(locationVerification)!==JSON.stringify(old?.locationVerification??null)){await db.query('UPDATE cells SET "locationVerification"=$2 WHERE id=$1',[saved.id,locationVerification]);saved.locationVerification=locationVerification;changes.push({field:'locationVerification',before:old?.locationVerification??null,after:locationVerification});}
    await scheduleChanged(db,old,saved,{user,requestId});
    await appendAudit(db,{actorId:user.id,action:old?'CELL_UPDATE':'CELL_CREATE',entity:'CELL',entityId:saved.id,changes,context:{requestId}});
    await r.event(db,{cellId:saved.id,summary:old?'Información de la célula actualizada.':'Célula creada.',date:saved.lastEffectiveDate,actorId:user.id});return saved;
