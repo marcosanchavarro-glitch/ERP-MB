@@ -102,7 +102,7 @@ test('Concurrencia real PostgreSQL, auditoría inmutable y rollback si falla aud
  await assert.rejects(()=>f.people.save(person({names:'Nueva Demo'}),{actorId:'system:test'}));assert.equal((await f.people.list()).total,1);
 });
 test('Migraciones reproducibles, health checks y configuración de producción',async t=>{
- const {f,s}=await setup(t);await migrate(f.pool);assert.equal((await f.pool.query('SELECT * FROM schema_migrations')).rowCount,13);
+ const {f,s}=await setup(t);await migrate(f.pool);assert.equal((await f.pool.query('SELECT * FROM schema_migrations')).rowCount,14);
  assert.equal((await fetch(s.base+'/health/live')).status,200);assert.deepEqual(await (await fetch(s.base+'/health/ready')).json(),{status:'ok'});
  const query=f.pool.query.bind(f.pool);f.pool.query=async()=>{throw new Error('secret internal detail');};
  const unavailable=await fetch(s.base+'/health/ready');assert.equal(unavailable.status,503);assert.deepEqual(await unavailable.json(),{status:'unavailable'});f.pool.query=query;

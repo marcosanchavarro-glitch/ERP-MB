@@ -14,7 +14,7 @@ export function cellsRouter(cells,pool){
  router.get('/meta',(req,res)=>res.json({capabilities:cellCapabilities(req.user)}));
  router.get('/person/:personId',async(req,res)=>{if(!validUuid(req.params.personId))throw new DomainError(400,'Identificador inválido.');assertPerson(requirePermission(req.user,'personas.ver'),req.params.personId);res.json(await cells.personHistory(req.params.personId,req.query,req.cellScope));});
  router.get('/',async(req,res)=>res.json(await cells.list(req.query,req.cellScope)));
- router.get('/:id',async(req,res)=>res.json({...await cells.get(req.params.id),capabilities:cellCapabilities(req.user,req.params.id)}));
+ router.get('/:id',async(req,res)=>res.json({...await cells.profile(req.params.id,scopeFor(req.user,'personas.ver')),capabilities:cellCapabilities(req.user,req.params.id)}));
  router.get('/:id/candidates',async(req,res)=>res.json(await candidates(pool,req.params.id,req.query,{user:req.user})));
  router.post('/:id/members/batch',csrfGuard,async(req,res)=>res.json(await assignBatch(pool,req.params.id,req.body,{user:req.user,requestId:req.requestId})));
  router.get('/:id/members',async(req,res)=>res.json(await cells.members(req.params.id,req.query,scopeFor(req.user,'personas.ver'))));

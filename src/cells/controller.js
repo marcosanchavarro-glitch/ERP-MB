@@ -5,7 +5,7 @@ import {mountMemberSelector} from './member-selector.js';
 import {escape as e,pageTitle} from '../components.js';
 import {cellRequest as api} from './api.js';
 import {request as peopleApi} from '../people/api.js';
-import {blankCell,validateCell,cellCode,cellDays,cellGenders,cellRoles,today} from '../domain/cell.js';
+import {blankCell,cellFields,validateCell,cellCode,cellDays,cellGenders,cellRoles,today} from '../domain/cell.js';
 import {base,rows,form,info,memberRows,historyRows,select,personName} from './views.js';
 import {loading} from '../people/views.js';
 let dirty=false,saving=false,dispose=()=>{};
@@ -49,7 +49,7 @@ if(act==='close')startClose();if(act==='cancel'&&canLeaveCells()){dirty=false;op
   const t=ev.target.closest('[data-cell-tab]');if(t){tab=t.dataset.cellTab;root.querySelectorAll('[data-cell-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b===t)));body();}
  });
  on('submit',async ev=>{ev.preventDefault();const f=ev.target;
-  if(f.id==='cell-form'){const input=Object.fromEntries(new FormData(f));input.generation=Number(input.generation);const result=validateCell(input);if(Object.keys(result.errors).length){error({message:Object.values(result.errors).join('\n')});return;}let saved;await submitTask(f,async()=>saved=await api(route.id?'/'+route.id:'',{method:route.id?'PUT':'POST',body:JSON.stringify({cell:input,version:cell.version})}),()=>{location.hash=base+'/'+saved.id;});}
+  if(f.id==='cell-form'){const input=Object.fromEntries(new FormData(f));for(const f of cellFields){if(f.type==='number')input[f.key]=input[f.key]===''?null:Number(input[f.key]);if(f.type==='boolean')input[f.key]=input[f.key]===''?null:input[f.key]==='true';}const result=validateCell(input);if(Object.keys(result.errors).length){error({message:Object.values(result.errors).join('\n')});return;}let saved;await submitTask(f,async()=>saved=await api(route.id?'/'+route.id:'',{method:route.id?'PUT':'POST',body:JSON.stringify({cell:input,version:cell.version})}),()=>{location.hash=base+'/'+saved.id;});}
   if(f.id==='cell-movement'){const data=Object.fromEntries(new FormData(f));if(operation.kind==='ASSIGN'&&!chosenPerson){error({message:'Seleccioná una persona existente.'});return;}if(operation.kind==='TRANSFER'&&!chosenDestination){error({message:'Seleccioná una célula de destino.'});return;}const payload={...data,kind:operation.kind,personId:operation.member?.personId||chosenPerson.id,version:cell.version,...(operation.member?{membershipId:operation.member.id}:{}),...(chosenDestination?{destinationId:chosenDestination.id}:{})};await submitTask(f,()=>api(`/${cell.id}/movements`,{method:'POST',body:JSON.stringify(payload)}),async()=>{tab='members';await profile();});}
   if(f.id==='cell-close'){try{const payload=closePayload();root.querySelector('#close-review').innerHTML=`<div class="cell-review"><h3>Revisión final</h3><p>Se cerrará ${e(cell.displayCode)} el ${e(payload.date)}. El código quedará disponible para una nueva célula.</p><ul>${closeMembers.map(m=>{const a=payload.allocations.find(a=>a.membershipId===m.id),dest=payload.mode==='ABSORB'?chosenDestination:destinations.get(m.id);return `<li>${e(m.person.names+' '+m.person.lastNames)} → ${a?e(dest.displayCode)+' · '+cellRoles[a.role]:'sin célula actual'}</li>`;}).join('')}</ul><p>Las personas y sus períodos anteriores se conservarán.</p><button class="button" type="button" data-cell-action="confirm-close">Confirmar cierre definitivo</button></div>`;}catch(err){error(err);}}
  });

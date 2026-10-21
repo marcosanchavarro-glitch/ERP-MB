@@ -3,7 +3,7 @@ import {scheduleChanged,cellClosed} from '../meetings/schedules.mjs';
 import {transaction} from '../db/pool.mjs';
 import {appendAudit} from '../audit/repository.mjs';
 import {scopeFor,requirePermission,assertPerson} from '../identity/authorization.mjs';
-import {validateCell,cellRoles,validDate,validUuid,cellFields} from '../../src/domain/cell.js';
+import {validateCell,cellRoles,validDate,validUuid,cellFields,cellLocationKeys,cellCompatibilityKeys} from '../../src/domain/cell.js';
 import * as r from './repository.mjs';
 import {cellAccess,cellCapabilities,fail,version,active,shape,role,dateAndReason,uuid,capacity} from './policy.mjs';
 export {cellAccess,cellCapabilities} from './policy.mjs';
@@ -14,7 +14,14 @@ export function createCellsService(pool){
   const {cell,errors}=validateCell(input.cell);if(Object.keys(errors).length)throw new DomainError(422,'Revisá los datos de la célula.',{fields:errors});
   const execute=async db=>{
    let old=null;if(id){await r.lockCells(db,[id]);old=await r.get(db,id);version(old,input.version);active(old);if(old.openedDate&&cell.openedDate!==old.openedDate)fail('La fecha de apertura conocida se conserva.');if(!old.openedDate&&cell.openedDate){const earliest=await r.earliestStart(db,id);if(earliest&&cell.openedDate>earliest)fail('La apertura no puede ser posterior a la primera pertenencia.');}}
-   const saved=await r.saveCell(db,cell,id),changes=cellFields.filter(f=>old?.[f.key]!==cell[f.key]).map(f=>({field:f.key,before:old?.[f.key]??null,after:cell[f.key]}));
+   // Older internal clients omit territory fields; an unrelated edit must preserve them.
+   if(old)for(const key of cellCompatibilityKeys)if(!Object.hasOwn(input.cell,key))cell[key]=old[key];
+   const locationChanged=cellLocationKeys.some(k=>(old?.[k]??null)!==(cell[k]??null));
+   if(old?.coordinateStatus==='VERIFIED'&&locationChanged)cell.coordinateStatus=cell.latitude==null?null:'PENDING';
+   const checked=validateCell(cell);if(Object.keys(checked.errors).length)throw new DomainError(422,'Revisá la ubicación y compatibilidad.',{fields:checked.errors});
+   Object.assign(cell,checked.cell);
+   const saved=await r.saveCell(db,cell,id,locationChanged||(old?.coordinateStatus??null)!==(cell.coordinateStatus??null)),changes=cellFields.filter(f=>(old?.[f.key]??null)!==cell[f.key]).map(f=>({field:f.key,before:old?.[f.key]??null,after:cell[f.key]}));
+   if((saved.locationUpdatedAt??null)!==(old?.locationUpdatedAt??null))changes.push({field:'locationUpdatedAt',before:old?.locationUpdatedAt??null,after:saved.locationUpdatedAt});
    await scheduleChanged(db,old,saved,{user,requestId});
    await appendAudit(db,{actorId:user.id,action:old?'CELL_UPDATE':'CELL_CREATE',entity:'CELL',entityId:saved.id,changes,context:{requestId}});
    await r.event(db,{cellId:saved.id,summary:old?'Información de la célula actualizada.':'Célula creada.',date:saved.lastEffectiveDate,actorId:user.id});return saved;
@@ -72,5 +79,5 @@ export function createCellsService(pool){
    return {operationId,cell:await r.get(db,id)};
   });
  }
- return {save,move,close,get:id=>r.get(pool,id),list:(q,s)=>r.list(pool,q,s),members:(id,q,s)=>r.members(pool,id,q,s),history:(id,q,s,cs={all:true,ids:[]})=>r.history(pool,id,q,s,cs),personHistory:(id,q,s)=>r.personHistory(pool,id,q,s)};
+ return {save,move,close,get:id=>r.get(pool,id),profile:async(id,personScope)=>({...await r.get(pool,id),ageStatistics:await r.ageStatistics(pool,id,personScope)}),list:(q,s)=>r.list(pool,q,s),members:(id,q,s)=>r.members(pool,id,q,s),history:(id,q,s,cs={all:true,ids:[]})=>r.history(pool,id,q,s,cs),personHistory:(id,q,s)=>r.personHistory(pool,id,q,s)};
 }
