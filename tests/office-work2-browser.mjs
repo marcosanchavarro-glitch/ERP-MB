@@ -14,7 +14,7 @@ const server=await testServer(f),browser=await chromium.launch({headless:true,ch
 page.on('pageerror',err=>errors.push(err.message));page.setDefaultTimeout(12000);
 const goto=path=>page.goto(server.base+'/#'+path);
 try{
- await goto('/oficina');await page.getByLabel('Usuario',{exact:true}).fill(admin.username);await page.getByLabel('Contraseña',{exact:true}).fill(admin.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
+ await goto('/oficina/trabajo');await page.getByLabel('Usuario',{exact:true}).fill(admin.username);await page.getByLabel('Contraseña',{exact:true}).fill(admin.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
  await page.getByRole('heading',{name:'Hola, Valentina',exact:true}).waitFor();await page.locator('.work-contact-form').waitFor();
  const first=await page.locator('[data-work-current] [data-person-id]').getAttribute('data-person-id');
  await page.getByRole('button',{name:'No contestó y siguiente',exact:true}).click();await page.getByText('1', {exact:true}).first().waitFor();await page.waitForFunction(id=>document.querySelector('[data-work-current] [data-person-id]')?.dataset.personId!==id,first);await page.locator('.work-contact-form').waitFor();
