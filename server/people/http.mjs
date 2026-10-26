@@ -2,18 +2,23 @@ import {Router} from 'express';
 import {DomainError} from '../core/errors.mjs';
 import {requirePermission,assertPerson,capabilities} from '../identity/authorization.mjs';
 import {csrfGuard} from '../identity/http.mjs';
+import {recommendationAccess} from '../territory/policy.mjs';
+import {officeCatalog,officeProfile,changeOffice,administrativeOffices} from './ecclesiastical.mjs';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export function peopleRouter(people) {
+export function peopleRouter(people,pool) {
  const router=Router();
  router.use((req,res,next)=>{req.readScope=requirePermission(req.user,'personas.ver');next();});
  router.param('id',(req,res,next,id)=>{if(!uuid.test(id))throw new DomainError(400,'El identificador de persona no es válido.');assertPerson(req.readScope,id);next();});
- router.get('/meta',async(req,res)=>res.json({localities:await people.localities(req.readScope),capabilities:capabilities(req.user),mode:'authenticated'}));
+ router.get('/meta',async(req,res)=>res.json({localities:await people.localities(req.readScope),offices:await officeCatalog(pool),capabilities:capabilities(req.user),mode:'authenticated'}));
+ router.get('/ecclesiastical-offices',async(req,res)=>res.json(await administrativeOffices(pool,req.user)));
+ router.get('/:id/ecclesiastical-office',async(req,res)=>res.json(await officeProfile(pool,req.params.id,req.user,req.query.page||1)));
+ router.post('/:id/ecclesiastical-office',csrfGuard,async(req,res)=>res.json(await changeOffice(pool,req.params.id,req.body,req.user,req.requestId)));
  router.get('/',async(req,res)=>{
-  const allowed=['q','status','sex','locality','completeness','sort','direction','page','pageSize'];
+  const allowed=['q','status','sex','locality','completeness','sort','direction','page','pageSize','office'];
   if(Object.entries(req.query).some(([key,value])=>!allowed.includes(key)||typeof value!=='string'||value.length>200))throw new DomainError(422,'Filtros no válidos.');
   res.json(await people.list(req.query,req.readScope));
  });
- router.get('/:id',async(req,res)=>res.json({...await people.get(req.params.id),capabilities:capabilities(req.user,req.params.id)}));
+ router.get('/:id',async(req,res)=>res.json({...await people.get(req.params.id),capabilities:{...capabilities(req.user,req.params.id),recommendations:recommendationAccess(req.user,req.params.id)}}));
  router.get('/:id/history',async(req,res)=>{assertPerson(requirePermission(req.user,'personas.historial'),req.params.id);res.json(await people.history(req.params.id,req.query.page));});
  const save=async(req,res)=>{
   const id=req.params.id,scope=requirePermission(req.user,id?'personas.editar':'personas.crear');

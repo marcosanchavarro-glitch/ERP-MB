@@ -24,6 +24,10 @@ export async function listPeople(client,query={},scope={all:true}) {
   where.push(`(${clause})`);
  }
  for(const key of ['status','sex'])if(query[key])where.push(`${quote(key)}=${bind(query[key])}`);
+ if(query.office){
+  if(query.office!=='NONE'&&!(await client.query('SELECT 1 FROM ecclesiastical_offices WHERE id=$1',[query.office])).rowCount)throw new DomainError(422,'Cargo no válido.');
+  where.push(query.office==='NONE'?'NOT EXISTS(SELECT 1 FROM ecclesiastical_appointments a WHERE a.person_id=people.id)':`EXISTS(SELECT 1 FROM ecclesiastical_appointments a WHERE a.person_id=people.id AND a.office_id=${bind(query.office)} AND NOT EXISTS(SELECT 1 FROM ecclesiastical_appointments newer WHERE newer.person_id=a.person_id AND (newer.effective_date>a.effective_date OR (newer.effective_date=a.effective_date AND newer.sequence>a.sequence))))`);
+ }
  if(query.locality)where.push(`"localityKey"=${bind(normalizeText(query.locality))}`);
  const complete=completenessFields.map(key=>`${quote(key)} IS NOT NULL`).join(' AND ');
  if(query.completeness==='complete')where.push(`(${complete})`);

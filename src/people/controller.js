@@ -1,3 +1,5 @@
+import {loadPersonOffice,canLeaveOffice} from './ecclesiastical.js';
+import {loadPersonRecommendations} from '../territory/recommendation-panel.js';
 import {sessionState} from '../auth/session.js';
 import {skeleton,holdLayout} from '../ui/skeleton.js';
 import {loadPersonContacts} from '../office-work/contacts.js';
@@ -13,9 +15,9 @@ import {request} from './api.js';
 import {basePath,loading,errorView,listRows,profileView,profileBody,historyView,formView,formData,personLink} from './views.js';
 import {blankPerson,validatePerson,personStates,sexes,fields,fullName} from '../domain/person.js';
 let listOwner;
-const listState={q:'',status:'',sex:'',locality:'',completeness:'',sort:'name',direction:'asc',page:1,pageSize:20,scroll:0};
+const listState={q:'',status:'',sex:'',office:'',locality:'',completeness:'',sort:'name',direction:'asc',page:1,pageSize:20,scroll:0};
 let dirty=false,saving=false,dispose=()=>{};
-export function canLeavePeople() {return !saving && (!dirty || window.confirm('Tenés cambios sin guardar. ¿Querés descartarlos y salir?'));}
+export function canLeavePeople() {return canLeaveOffice() && !saving && (!dirty || window.confirm('Tenés cambios sin guardar. ¿Querés descartarlos y salir?'));}
 window.addEventListener('beforeunload',event=>{if(dirty||saving){event.preventDefault();event.returnValue='';}});
 export function unmountPeople() {dispose();dispose=()=>{};dirty=false;saving=false;}
 export function peopleRoute(path) {
@@ -26,7 +28,7 @@ export function peopleRoute(path) {
 }
 const demoNotice='<div class="demo-notice">Entorno de demostración · Usá exclusivamente datos ficticios.</div>';
 export function mountPeople(root,route) {
- unmountPeople();if(listOwner!==sessionState.user?.id){Object.assign(listState,{q:'',status:'',sex:'',locality:'',completeness:'',sort:'name',direction:'asc',page:1,pageSize:20,scroll:0});listOwner=sessionState.user?.id;}
+ unmountPeople();if(listOwner!==sessionState.user?.id){Object.assign(listState,{q:'',status:'',sex:'',office:'',locality:'',completeness:'',sort:'name',direction:'asc',page:1,pageSize:20,scroll:0});listOwner=sessionState.user?.id;}
  let active=true,sequence=0,searchTimer,person,tab='summary';
  const listeners=new AbortController();
  dispose=()=>{active=false;sequence++;clearTimeout(searchTimer);listeners.abort();if(route.kind==='list')listState.scroll=window.scrollY;};
@@ -45,7 +47,7 @@ export function mountPeople(root,route) {
   try {
    const meta=await request('/meta');if(!active)return;
    const select=(key,label,options)=>`<label class="filter-control">${label}<select name="${key}" aria-label="${label}"><option value="">Todos</option>${Object.entries(options).map(([value,text])=>`<option value="${e(value)}" ${listState[key]===value?'selected':''}>${e(text)}</option>`).join('')}</select></label>`;
-   root.innerHTML=`${demoNotice}<div class="people-page-heading">${pageTitle('OFICINA · BASE CENTRAL','Personas / Matriz','Una persona, una ficha. Toda la información en un mismo lugar.')} ${meta.capabilities.create?`<div class="people-heading-actions"><button class="button" data-people-action="quick-create">Alta rápida</button><a class="button secondary" href="#${basePath}/nueva">${icon('people')} Nueva persona</a></div>`:''}</div><section class="matrix" aria-label="Listado de personas"><div class="matrix-toolbar"><label class="people-search">${icon('search')}<span class="sr-only">Buscar personas</span><input name="q" type="search" maxlength="150" placeholder="Buscar por nombre, documento o celular" value="${e(listState.q)}"></label><label class="sort-control">Ordenar<select name="sort"><option value="name" ${listState.sort==='name'?'selected':''}>Apellido y nombre</option><option value="updatedAt" ${listState.sort==='updatedAt'?'selected':''}>Última modificación</option><option value="joinedDate" ${listState.sort==='joinedDate'?'selected':''}>Incorporación</option></select></label><button class="button secondary" data-people-action="direction" aria-label="Cambiar dirección del orden">${listState.direction==='asc'?'Ascendente':'Descendente'}</button></div><div class="matrix-filters">${select('status','Estado',personStates)}${select('sex','Sexo',sexes)}${select('locality','Localidad',Object.fromEntries(meta.localities.map(value=>[value,value])))}${select('completeness','Ficha',{complete:'Completa',incomplete:'Por completar'})}<button class="clear-filters" data-people-action="clear">Limpiar filtros</button></div><span id="results-announcement" class="sr-only" role="status"></span><div id="people-results">${loading}</div></section><p class="matrix-help">Seleccioná un nombre para consultar su ficha sin perder tu lugar en la Matriz.</p>`;
+   root.innerHTML=`${demoNotice}<div class="people-page-heading">${pageTitle('OFICINA · BASE CENTRAL','Personas / Matriz','Una persona, una ficha. Toda la información en un mismo lugar.')} ${meta.capabilities.create?`<div class="people-heading-actions"><button class="button" data-people-action="quick-create">Alta rápida</button><a class="button secondary" href="#${basePath}/nueva">${icon('people')} Nueva persona</a></div>`:''}</div><section class="matrix" aria-label="Listado de personas"><div class="matrix-toolbar"><label class="people-search">${icon('search')}<span class="sr-only">Buscar personas</span><input name="q" type="search" maxlength="150" placeholder="Buscar por nombre, documento o celular" value="${e(listState.q)}"></label><label class="sort-control">Ordenar<select name="sort"><option value="name" ${listState.sort==='name'?'selected':''}>Apellido y nombre</option><option value="updatedAt" ${listState.sort==='updatedAt'?'selected':''}>Última modificación</option><option value="joinedDate" ${listState.sort==='joinedDate'?'selected':''}>Incorporación</option></select></label><button class="button secondary" data-people-action="direction" aria-label="Cambiar dirección del orden">${listState.direction==='asc'?'Ascendente':'Descendente'}</button></div><div class="matrix-filters">${select('status','Estado',personStates)}${select('sex','Sexo',sexes)}${select('locality','Localidad',Object.fromEntries(meta.localities.map(value=>[value,value])))}${select('office','Cargo eclesiástico',{...Object.fromEntries(meta.offices.map(o=>[o.id,o.name])),NONE:'Sin cargo registrado'})}${select('completeness','Ficha',{complete:'Completa',incomplete:'Por completar'})}<button class="clear-filters" data-people-action="clear">Limpiar filtros</button></div><span id="results-announcement" class="sr-only" role="status"></span><div id="people-results">${loading}</div></section><p class="matrix-help">Seleccioná un nombre para consultar su ficha sin perder tu lugar en la Matriz.</p>`;
    await refreshRows();if(active)window.scrollTo(0,listState.scroll);
   }catch(error){renderError(error,loadList);}
  }
@@ -55,7 +57,7 @@ export function mountPeople(root,route) {
  }
  async function loadProfile() {
   root.innerHTML=skeleton('profile');
-  try {person=await request(`/${route.id}`);if(!active)return;root.innerHTML=`${demoNotice}<a class="back-to-matrix" href="#${personContextReturn()||basePath}">← ${personContextReturn()?'Volver a la consulta':'Volver a la Matriz'}</a>${profileView(person,{tab})}`;loadAccountAction(root,person);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='officeContacts')loadPersonContacts(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
+  try {person=await request(`/${route.id}`);if(!active)return;root.innerHTML=`${demoNotice}<a class="back-to-matrix" href="#${personContextReturn()||basePath}">← ${personContextReturn()?'Volver a la consulta':'Volver a la Matriz'}</a>${profileView(person,{tab})}`;loadAccountAction(root,person);if(tab==='ecclesiastical')loadPersonOffice(root,person.id);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='recommendations')loadPersonRecommendations(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='officeContacts')loadPersonContacts(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
   catch(error){renderError(error,loadProfile);}
  }
  async function loadForm() {
@@ -93,14 +95,14 @@ export function mountPeople(root,route) {
  on('click',event=>{
   const action=event.target.closest('[data-people-action]')?.dataset.peopleAction;
   if(action==='quick-create')openQuickPerson({onCreated:()=>{listState.q='';listState.page=1;return loadList();}}).catch(error=>window.alert(error.message));
-  if(action==='clear'){clearTimeout(searchTimer);Object.assign(listState,{q:'',status:'',sex:'',locality:'',completeness:'',page:1});for(const [key,value]of Object.entries(listState)){const control=root.querySelector(`[name="${key}"]`);if(control)control.value=value;}refreshRows();}
+  if(action==='clear'){clearTimeout(searchTimer);Object.assign(listState,{q:'',status:'',sex:'',office:'',locality:'',completeness:'',page:1});for(const [key,value]of Object.entries(listState)){const control=root.querySelector(`[name="${key}"]`);if(control)control.value=value;}refreshRows();}
   if(action==='direction'){listState.direction=listState.direction==='asc'?'desc':'asc';event.target.closest('button').textContent=listState.direction==='asc'?'Ascendente':'Descendente';refreshRows();}
-  if(action==='retry'){if(route.kind==='list')refreshRows();else if(tab==='history')loadHistory();}
+  if(action==='retry'){if(route.kind==='list')refreshRows();else if(tab==='ecclesiastical')loadPersonOffice(root,person.id);if(tab==='history')loadHistory();}
   if(action==='cancel-form'&&!saving)location.hash=route.id?`${basePath}/${route.id}`:basePath;
   if(action==='reload-form'&&canLeavePeople())loadForm();
   const page=event.target.closest('[data-page]');if(page){listState.page=Number(page.dataset.page);refreshRows();}
   const historyPage=event.target.closest('[data-history-page]');if(historyPage)loadHistory(historyPage.dataset.historyPage);
-  const tabButton=event.target.closest('[data-profile-tab]');if(tabButton){tab=tabButton.dataset.profileTab;root.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tabButton)));root.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='officeContacts')loadPersonContacts(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
+  const tabButton=event.target.closest('[data-profile-tab]');if(tabButton){if(!canLeaveOffice())return;tab=tabButton.dataset.profileTab;root.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tabButton)));root.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab);if(tab==='ecclesiastical')loadPersonOffice(root,person.id);if(tab==='history')loadHistory();if(tab==='cell')loadPersonCells(root,person.id);if(tab==='recommendations')loadPersonRecommendations(root,person.id);if(tab==='attendance')loadPersonAttendance(root,person.id);if(tab==='officeContacts')loadPersonContacts(root,person.id);if(tab==='followup')loadPersonFollowup(root,person.id);}
  });
  on('submit',async event=>{
   if(event.target.id!=='person-form')return;event.preventDefault();if(saving)return;

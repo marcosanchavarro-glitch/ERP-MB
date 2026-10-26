@@ -72,7 +72,7 @@ export async function createAppServer(people,{pool,config}) {
  app.use('/api/admin/users',identityAdminRouter(createIdentityAdmin(pool)));
  app.get('/api/modules/:id/access',(req,res)=>{const node=assertModule(req.user,req.params.id);res.json({id:node.id,path:node.path,status:node.status});});
  app.use('/api/followup',followupRouter(createFollowupService(pool)));
- app.use('/api/people',peopleRouter(people));
+ app.use('/api/people',peopleRouter(people,pool));
  app.use('/api/cells',cellsRouter(createCellsService(pool),pool));
  app.use('/api/meetings',meetingsRouter(createMeetingsService(pool)));
  app.use('/api/leader',leaderRouter(createLeaderService(pool)));
@@ -84,7 +84,8 @@ export async function createAppServer(people,{pool,config}) {
  app.use((req,res,next)=>next(new DomainError(404,'No encontramos esta página.')));
  app.use((error,req,res,next)=>{
   const known=error instanceof DomainError;
-  const status=known?error.status:error.type==='entity.too.large'?413:error.type==='entity.parse.failed'||error instanceof URIError?400:500;
+  const malformedEncoding=Boolean(req.headers['content-encoding'])&&['Z_DATA_ERROR','Z_BUF_ERROR'].includes(error.code);
+  const status=known?error.status:error.type==='entity.too.large'?413:error.type==='entity.parse.failed'||error instanceof URIError||malformedEncoding?400:500;
   log(status>=500?'error':status===401||status===403?'security':'warn','request_error',{requestId:req.requestId,status,code:known?error.details.code || 'DOMAIN_ERROR':error.code || error.type || 'INTERNAL'});
   if(res.headersSent)return next(error);
   res.status(status).json({message:known?error.message:status===400?'No pudimos leer la solicitud.':status===413?'El formulario es demasiado extenso.':'No pudimos completar la operación. Intentá nuevamente.',...(known?error.details:{}),requestId:req.requestId});

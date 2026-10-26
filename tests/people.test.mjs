@@ -31,7 +31,7 @@ test('Alta, persistencia, edición, concurrencia, eventos y auditoría separada'
  await store.save(editInput(person),{...actor,id:person.id,version:2});assert.equal((await store.history(person.id)).items.length,4);
  const audit=(await f.pool.query('SELECT changes FROM audit_events ORDER BY sequence DESC')).rows;
  assert.equal(audit.length,2);assert.deepEqual(audit[0].changes.find(change=>change.field==='status'),{field:'status',before:'ACTIVA',after:'INACTIVA'});
- assert.equal(Number((await f.pool.query('SELECT count(*) AS n FROM schema_migrations')).rows[0].n),15);
+ assert.equal(Number((await f.pool.query('SELECT count(*) AS n FROM schema_migrations')).rows[0].n),19);
 });
 test('Documento único normalizado, documento opcional y posibles coincidencias',async(t)=>{
  const f=await fixture();t.after(()=>f.close());const store=f.people;

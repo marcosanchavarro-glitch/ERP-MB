@@ -3,6 +3,7 @@ import {fields,fieldGroups,validatePerson,normalizeText,normalizeDocument,normal
 import {DomainError} from '../core/errors.mjs';
 import {transaction} from '../db/pool.mjs';
 import {appendAudit} from '../audit/repository.mjs';
+import {initialMember} from './ecclesiastical.mjs';
 import {getPerson,listPeople,localities,history,lockName,documentExists,nameMatches,persistPerson,appendPersonEvents} from './repository.mjs';
 export function createPeopleService(pool) {
  async function save(input,{id=null,version,actorId,acknowledgeDuplicates=false,readScope={all:true},requestId,client:externalClient}={}) {
@@ -24,6 +25,7 @@ export function createPeopleService(pool) {
    const now=new Date().toISOString(),personId=id||randomUUID();
    const stored={...person,...derived,updatedAt:now};
    await persistPerson(client,personId,stored,Boolean(old),now);
+   if(!old)await initialMember(client,{id:personId,...person},actorId,requestId);
    await appendAudit(client,{actorId,action:old?'PERSON_UPDATE':'PERSON_CREATE',entity:'PERSON',entityId:personId,changes,occurredAt:now,context:requestId?{requestId}:{}});
    const events=[];
    if(!old)events.push(['person.created','Persona creada.']);

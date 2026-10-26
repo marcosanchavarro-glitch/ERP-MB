@@ -3,7 +3,7 @@ const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 const count=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
 const href=value=>typeof value==='string'&&value.startsWith('#/')?e(value):'#/';
 const empty=()=>'<p class="halo-chart-empty">Sin datos suficientes para graficar.</p>';
-const key=(r,i)=>`<a class="halo-chart-key" href="${href(r.href)}" style="--chart-index:${i%4}"><i aria-hidden="true"></i><span>${e(r.label)}</span><strong>${r.value}</strong><span class="halo-chart-tooltip" role="tooltip">${e(r.label)}: ${r.value}</span></a>`;
+const key=(r,i)=>{const content=`<i aria-hidden="true"></i><span>${e(r.label)}</span><strong>${r.value}</strong><span class="halo-chart-tooltip" role="tooltip">${e(r.label)}: ${r.value}</span>`;return r.href===null?`<span class="halo-chart-key" style="--chart-index:${i%4}">${content}</span>`:`<a class="halo-chart-key" href="${href(r.href)}" style="--chart-index:${i%4}">${content}</a>`;};
 export function barChart(rows){
  const data=rows.filter(r=>count(r.value));if(!data.length||!data.some(r=>r.value))return empty();
  const max=Math.max(...data.map(r=>r.value));

@@ -9,6 +9,7 @@
     const theme=preference==='system'?(system.matches?'dark':'light'):preference;
     root.dataset.theme=theme;root.dataset.themePreference=preference;
     document.querySelectorAll('[data-theme-preference-control]').forEach(control=>{control.value=preference;});
+    document.querySelectorAll('[data-theme-switch]').forEach(control=>{control.setAttribute('aria-checked',String(theme==='dark'));control.title=theme==='dark'?'Cambiar a modo claro':'Cambiar a modo oscuro';});
     const meta=document.querySelector('meta[name="theme-color"]');
     if(meta){const color=getComputedStyle(root).getPropertyValue('--color-background').trim();if(color)meta.content=color;}
   }
@@ -20,6 +21,9 @@
     if(!event.target.matches('[data-theme-preference-control]')||!valid(event.target.value))return;
     preference=event.target.value;try{localStorage.setItem(key,preference);}catch{}apply();
   });
-  document.addEventListener('click',event=>document.querySelectorAll('.theme-picker[open]').forEach(picker=>{if(!picker.contains(event.target))picker.open=false;}));
+  document.addEventListener('click',event=>{
+    if(event.target.closest('[data-theme-switch]')){preference=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem(key,preference);}catch{}apply();}
+    document.querySelectorAll('.theme-picker[open]').forEach(picker=>{if(!picker.contains(event.target))picker.open=false;});
+  });
   document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const picker=event.target.closest('.theme-picker[open]');if(picker){event.preventDefault();event.stopPropagation();picker.open=false;picker.querySelector('summary').focus();}},true);
 })();

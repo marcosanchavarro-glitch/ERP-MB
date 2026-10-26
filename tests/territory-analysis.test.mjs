@@ -1,0 +1,81 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {fixture,account,testServer,httpClient} from './helpers.mjs';
+import {createCellsService} from '../server/cells/service.mjs';
+import {principal} from '../server/identity/authorization.mjs';
+import {createUser} from '../server/identity/service.mjs';
+import {publicUser} from '../server/identity/presentation.mjs';
+import {territorialAnalysis} from '../server/territory/analysis.mjs';
+import {blankCell} from '../src/domain/cell.js';
+async function setup(t){const f=await fixture();t.after(()=>f.close());const user=await account(f),ctx={user:await principal(f.pool,user.id)},cells=createCellsService(f.pool),server=await testServer(f);t.after(()=>server.close());const client=httpClient(server.base);await client.login(user);
+ const send=async(path,body,method='POST')=>client.request('/api/territory'+path,{method,body:JSON.stringify(body)});
+ const unit=async(level,name,parentId=null)=>{const r=await send('/units',{level,name,parentId,geographyConfirmed:true});assert.equal(r.status,201,JSON.stringify(await r.clone().json()));return r.json();};
+ const country=await unit('COUNTRY','Argentina'),province=await unit('PROVINCE','Buenos Aires',country.id),municipality=await unit('MUNICIPALITY','La Matanza',province.id),locality=await unit('LOCALITY','Virrey del Pino',municipality.id),zone=await unit('ZONE','Zona operativa de prueba',locality.id),sector=await unit('SECTOR','Sector de prueba',zone.id);
+ const cell=extra=>cells.save({cell:{...blankCell(),groupCode:'A',openedDate:'2020-01-01',country:'Argentina',province:'Buenos Aires',municipality:'La Matanza',locality:'Virrey del Pino',gender:'F',latitude:-34.8,longitude:-58.6,coordinateStatus:'VERIFIED',recommendedAgeMin:18,recommendedAgeMax:35,...extra}},ctx);
+ return {f,user,client,server,send,unit,country,province,municipality,locality,zone,sector,cell};
+}
+test('Territorio 1.3: jerarquía real explícita, zonas/sectores, edición concurrente, desactivación y auditoría',async t=>{
+ const x=await setup(t),{send,zone,sector,country,f,user}=x;
+ assert.equal((await send('/units',{level:'ZONE',name:'No válido',parentId:country.id})).status,422);
+ assert.equal((await send('/units',{level:'COUNTRY',name:'Nombre no confirmado'})).status,422);
+ assert.equal((await send('/units',{level:'SECTOR',name:sector.name,parentId:zone.id})).status,409);
+ const edit={level:'SECTOR',parentId:zone.id,name:'Sector revisado',description:'Relevamiento administrativo',active:true,surveyStatus:'REVIEWED',version:sector.version};
+ let r=await send('/units/'+sector.id,edit,'PUT');assert.equal(r.status,200);const saved=await r.json();assert.equal(saved.version,2);assert.equal(saved.updated_by,user.id);assert.equal(saved.survey_status,'REVIEWED');
+ assert.equal((await send('/units/'+sector.id,edit,'PUT')).status,409);
+ assert.equal((await send('/units/'+sector.id,{...edit,parentId:x.locality.id,version:2},'PUT')).status,422);
+ assert.equal((await send('/units/'+zone.id,{level:'ZONE',parentId:x.locality.id,name:zone.name,active:false,version:zone.version},'PUT')).status,409);
+ assert.equal((await send('/units/'+sector.id,{...edit,active:false,version:2},'PUT')).status,200);
+ assert.equal((await send('/units/'+zone.id,{level:'ZONE',parentId:x.locality.id,name:zone.name,active:false,version:zone.version},'PUT')).status,200);
+ const events=(await f.pool.query("SELECT * FROM audit_events WHERE entity='TERRITORY_UNIT' ORDER BY sequence")).rows;assert.equal(events.length,9);assert.ok(events.every(e=>e.actor_id===user.id&&e.context.requestId));assert.equal(events.at(-1).action,'TERRITORY_UNIT_DEACTIVATE');
+ await assert.rejects(()=>f.pool.query('UPDATE territory_units SET parent_id=$2 WHERE id=$1',[country.id,sector.id]),e=>e.code==='23514');
+});
+test('Territorio 1.3: asignación explícita, coherencia geográfica, versiones y ninguna alteración de coordenadas',async t=>{
+ const x=await setup(t),c=await x.cell(),{send,sector,zone,f}=x;
+ const before=(await f.pool.query('SELECT * FROM cells WHERE id=$1',[c.id])).rows[0];
+ let r=await send('/cells/'+c.id+'/territory',{unitId:sector.id,version:0},'PUT');assert.equal(r.status,200);let assignment=await r.json();assert.equal(assignment.version,1);
+ assert.equal((await send('/cells/'+c.id+'/territory',{unitId:zone.id,version:0},'PUT')).status,409);
+ assert.equal((await send('/units/'+sector.id,{level:'SECTOR',parentId:zone.id,name:sector.name,active:false,version:sector.version},'PUT')).status,409);
+ assert.equal((await send('/cells/'+c.id+'/territory',{unitId:x.locality.id,version:1},'PUT')).status,422);
+ const other=await x.cell({generation:2,locality:'Otra localidad'});assert.equal((await send('/cells/'+other.id+'/territory',{unitId:sector.id,version:0},'PUT')).status,422);
+ r=await send('/cells/'+c.id+'/territory',{unitId:null,version:1},'PUT');assert.equal(r.status,200);assignment=await r.json();assert.equal(assignment.version,2);assert.equal(assignment.unit_id,null);
+ assert.deepEqual((await f.pool.query('SELECT * FROM cells WHERE id=$1',[c.id])).rows[0],before);
+ assert.equal((await f.pool.query('SELECT count(*)::int n FROM cell_memberships')).rows[0].n,0);
+ assert.equal((await f.pool.query("SELECT count(*)::int n FROM audit_events WHERE action='CELL_TERRITORY_ASSIGN'")).rows[0].n,2);
+ assert.equal((await x.client.request('/api/territory/cells/'+c.id+'/territory',{method:'PUT',headers:{'X-CSRF-Token':''},body:JSON.stringify({unitId:zone.id,version:2})})).status,403);
+});
+test('Territorio 1.3: agregados reales, activos, faltantes, filtros combinados y presencia configurada',async t=>{
+ const x=await setup(t),a=await x.cell(),b=await x.cell({generation:2,latitude:null,longitude:null,coordinateStatus:null,gender:'M',recommendedAgeMin:60,recommendedAgeMax:80}),closed=await x.cell({generation:3});
+ await x.f.pool.query(`UPDATE cells SET status='CLOSED',"closedDate"='2026-01-01' WHERE id=$1`,[closed.id]);
+ await x.send('/cells/'+a.id+'/territory',{unitId:x.sector.id,version:0},'PUT');await x.send('/cells/'+b.id+'/territory',{unitId:x.zone.id,version:0},'PUT');
+ const empty=await x.unit('SECTOR','Sector sin registros',x.zone.id),emptyLocality=await x.unit('LOCALITY','González Catán',x.municipality.id);
+ const read=async query=>(await (await x.client.request('/api/territory/cells?analysis=true'+query)).json());
+ let r=await read('');assert.deepEqual(r.analysis.summary,{total:2,verified:1,pending:1,localities:1});assert.equal(r.items.length,2);assert.equal(r.analysis.presence.find(u=>u.id===x.zone.id).cells,2);assert.equal(r.analysis.presence.find(u=>u.id===x.sector.id).cells,1);assert.equal(r.analysis.presence.find(u=>u.id===empty.id).cells,0);assert.equal(r.analysis.presence.find(u=>u.id===emptyLocality.id).cells,0);assert.equal(r.analysis.distributions.find(g=>g.kind==='zone').n,2);
+ r=await read('&province=Buenos%20Aires&municipality=La%20Matanza&locality=Virrey&zone='+x.zone.id+'&sector='+x.sector.id+'&gender=F&ageMin=18&ageMax=18&location=verified');assert.equal(r.total,1);assert.equal(r.items[0].id,a.id);assert.equal(r.analysis.summary.total,1);
+ assert.equal((await read('&location=missing')).analysis.summary.pending,1);assert.equal((await read('&status=ALL')).analysis.summary.total,2);
+ r=await read('&gender=F&ageMin=90');assert.equal(r.analysis.summary.total,0);assert.deepEqual(r.items,[]);
+ assert.equal((await x.client.request('/api/territory/cells?analysis=true&zone=invalid')).status,422);
+});
+test('Territorio 1.3: permisos efectivos, sin roles nuevos ni ubicaciones restringidas ni falsos vacíos globales',async t=>{
+ const x=await setup(t),a=await x.cell(),hidden=await x.cell({generation:2,longitude:-10.1234});await x.send('/cells/'+a.id+'/territory',{unitId:x.sector.id,version:0},'PUT');const hiddenUnit=await x.unit('ZONE','Zona restringida',x.locality.id);await x.send('/cells/'+hidden.id+'/territory',{unitId:hiddenUnit.id,version:0},'PUT');
+ const password=randomUUID()+randomUUID(),u=await createUser(x.f.pool,{username:'territory.'+randomUUID(),password,grants:[]});
+ for(const [p,type,id]of [['celulas.ver','cell',a.id],['modulos.acceder','subarea','territorio-analisis']])await x.f.pool.query('INSERT INTO user_permissions(id,user_id,permission,scope_type,scope_id) VALUES($1,$2,$3,$4,$5)',[randomUUID(),u.id,p,type,id]);
+ const client=httpClient(x.server.base);await client.login({...u,password});assert.equal((await client.request('/api/territory/cells')).status,403);
+ let response=await client.request('/api/territory/cells?analysis=true');assert.equal(response.status,200);let r=await response.json();assert.equal(r.analysis.summary.total,1);assert.equal(r.analysis.completeScope,false);assert.ok(!JSON.stringify(r).includes(hidden.id));assert.ok(!JSON.stringify(r).includes('-10.1234'));assert.ok(!r.analysis.presence.some(u=>u.id===hiddenUnit.id));assert.equal(r.canManageTerritory,false);
+ const units=await (await client.request('/api/territory/units')).json();assert.equal(units.canManage,false);assert.ok(!units.items.some(u=>u.id===hiddenUnit.id));assert.ok(units.items.some(u=>u.id===x.country.id));
+ assert.equal((await client.request('/api/territory/units',{method:'POST',body:JSON.stringify({level:'COUNTRY',name:'No autorizado',geographyConfirmed:true})})).status,403);
+ assert.equal((await client.request('/api/territory/cells/'+a.id+'/territory',{method:'PUT',body:JSON.stringify({unitId:x.zone.id,version:1})})).status,403);
+ const presented=publicUser(await principal(x.f.pool,u.id));assert.ok(presented.access.paths.some(p=>p.path==='/territorio/analisis'));assert.ok(!presented.access.paths.some(p=>p.path==='/territorio/mapa'));
+ await x.f.pool.query("DELETE FROM user_permissions WHERE user_id=$1 AND permission='celulas.ver'",[u.id]);assert.equal((await client.request('/api/territory/cells?analysis=true')).status,403);assert.ok(!publicUser(await principal(x.f.pool,u.id)).access.paths.some(p=>p.path==='/territorio/analisis'));
+});
+test('Territorio 1.3: ámbito no configurado y cero células conservan indicadores vacíos honestos',async t=>{
+ const f=await fixture();t.after(()=>f.close());const user=await account(f),server=await testServer(f);t.after(()=>server.close());const client=httpClient(server.base);await client.login(user);const r=await (await client.request('/api/territory/cells?analysis=true')).json();assert.deepEqual(r.analysis.summary,{total:0,verified:0,pending:0,localities:0});assert.deepEqual(r.analysis.presence,[]);assert.deepEqual(r.analysis.distributions,[]);assert.ok(r.reference);assert.equal(r.central.coordinateStatus,null);
+});
+test('Territorio 1.3: 5000 células, agregación única y mapa paginado sin descargar el dataset',async t=>{
+ const f=await fixture();t.after(()=>f.close());
+ await f.pool.query(`INSERT INTO cells(id,"groupCode",generation,gender,"openedDate","lastEffectiveDate",country,province,municipality,locality,latitude,longitude,"coordinateStatus") SELECT gen_random_uuid(),'Q',n,CASE WHEN n%2=0 THEN 'F' ELSE 'M' END,'2026-01-01','2026-01-01','Argentina','Buenos Aires','La Matanza','Virrey del Pino',-34.8,-58.6,'VERIFIED' FROM generate_series(1,5000) n`);
+ let queries=0;const start=performance.now(),data=await territorialAnalysis({query:(...args)=>{queries++;return f.pool.query(...args);}},'($1 OR id=ANY($2::uuid[]))',[true,[]],{all:true});
+ assert.equal(queries,1);assert.deepEqual(data.summary,{total:5000,verified:5000,pending:0,localities:1});assert.equal(data.distributions.find(d=>d.kind==='classification'&&d.label==='F').n,2500);
+ t.diagnostic('Agregación de 5000 células: '+(performance.now()-start).toFixed(1)+' ms, una consulta SQL; no es un SLA.');
+ const user=await account(f),server=await testServer(f);t.after(()=>server.close());const client=httpClient(server.base);await client.login(user);const r=await (await client.request('/api/territory/cells?analysis=true')).json();assert.equal(r.analysis.summary.total,5000);assert.equal(r.items.length,500);assert.equal(r.pages,10);
+});

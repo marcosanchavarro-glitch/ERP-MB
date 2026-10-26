@@ -9,12 +9,13 @@ import {appendAudit} from '../audit/repository.mjs';
 import {DomainError} from '../core/errors.mjs';
 import {territoryScope} from './policy.mjs';
 import {createGeocoder,addressInput,locationConfirmation,referenceView,validPoint} from './geocoding.mjs';
+import {recommendationAccess} from './policy.mjs';
 export const centralSite=async db=>(await db.query("SELECT * FROM institutional_sites WHERE id='central'")).rows[0];
 export function locationsRouter(pool,{provider,geocoder=createGeocoder(pool)}={}){
  const router=Router();
  const canManage=user=>scopeFor(user,'admin.usuarios.gestionar').all;
  const searchLimit=rateLimit({windowMs:60000,limit:10,standardHeaders:'draft-8',legacyHeaders:false,handler:(req,res,next)=>next(new DomainError(429,'Demasiadas búsquedas. Intentá en un momento.'))});
- router.get('/settings',(req,res)=>{if(!req.user)throw new DomainError(401,'Ingresá para continuar.');const edit=scopeFor(req.user,'celulas.editar'),create=scopeFor(req.user,'celulas.crear');if(!canManage(req.user)&&!edit.all&&!edit.ids.length&&!create.all)throw new DomainError(403,'Esta herramienta no está disponible.');res.json({configured:geocoder.configured,provider,reference:referenceView()});});
+ router.get('/settings',(req,res)=>{if(!req.user)throw new DomainError(401,'Ingresá para continuar.');const edit=scopeFor(req.user,'celulas.editar'),create=scopeFor(req.user,'celulas.crear'),personEdit=[undefined,...scopeFor(req.user,'personas.ver').ids,...scopeFor(req.user,'personas.editar').ids].some(id=>recommendationAccess(req.user,id,{edit:true}));if(!canManage(req.user)&&!edit.all&&!edit.ids.length&&!create.all&&!personEdit)throw new DomainError(403,'Esta herramienta no está disponible.');res.json({configured:geocoder.configured,provider,reference:referenceView()});});
  router.get('/central',async(req,res)=>{territoryScope(req.user);const site=await centralSite(pool);if(!canManage(req.user))delete site.verification;res.json({...site,canManage:canManage(req.user)});});
  router.post('/search/:kind/:id',csrfGuard,searchLimit,async(req,res)=>{
   const {kind,id}=req.params;shape(req.body,['address','locality','province','country']);
