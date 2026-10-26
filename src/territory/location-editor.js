@@ -17,11 +17,11 @@ export function mountLocationEditor(form,{kind,id,onDirty=()=>{}}){
   if(forceFallback){marker?.remove();marker=null;map?.destroy();map=null;}
   if(!map){
    settings??=await locationRequest('/settings');
-   creating??=createMapCanvas(preview,{provider:forceFallback?{...settings.provider,google:{configured:false}}:settings.provider,center:valid(p)?{...p,zoom:16}:settings.reference,signal:abort.signal,onClick:p=>{manual=true;updatePoint(p);place(point());message.textContent='Punto ajustado. Revisalo y confirmalo.';},onError:()=>{if(map?.kind==='google')show(point(),true).catch(()=>{message.textContent='No pudimos cargar el mapa. Podés completar las coordenadas manualmente.';});else message.textContent='No pudimos cargar el mapa. Podés completar las coordenadas manualmente.';}}).finally(()=>{creating=null;});
+   creating??=createMapCanvas(preview,{provider:forceFallback?{...settings.provider,geoapify:{configured:false}}:settings.provider,center:valid(p)?{...p,zoom:16}:settings.reference,signal:abort.signal,onClick:p=>{manual=true;updatePoint(p);place(point());message.textContent='Punto ajustado. Revisalo y confirmalo.';},onError:()=>{if(map?.kind==='maplibre'&&!map.fallbackReason)show(point(),true).catch(()=>{message.textContent='No pudimos cargar el mapa. Podés completar las coordenadas manualmente.';});else message.textContent='No pudimos cargar el mapa. Podés completar las coordenadas manualmente.';}}).finally(()=>{creating=null;});
    const canvas=await creating;if(!active){canvas.destroy();return;}map=canvas;
   }
   if(!active)return;map.resize();const current=point(),center=valid(current)?current:settings.reference;map.setView(center,valid(current)?16:settings.reference.zoom);if(valid(current))place(current);
-  const status=root.querySelector('[data-location-provider]');status.hidden=map.kind==='google';status.textContent='Mapa de respaldo · Google Maps no está disponible o requiere configuración.';
+  const status=root.querySelector('[data-location-provider]');status.hidden=!map.fallbackReason;status.textContent='Cartografía de respaldo · Geoapify no está disponible o requiere configuración.';
  }
  function place(p){if(!valid(p)||!map)return;if(!marker)marker=map.marker({point:p,html:'<span class="location-preview-pin" aria-hidden="true">◆</span>',title:'Punto propuesto. Arrastrá para ajustar.',draggable:true,onDrag:p=>{manual=true;updatePoint(p);message.textContent='Punto ajustado. Revisalo y confirmalo.';}});else marker.update(p);}
  root.addEventListener('click',async event=>{

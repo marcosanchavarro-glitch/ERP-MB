@@ -17,7 +17,7 @@ export function mountTerritory(root){
  function clearMap(){canvasAbort?.abort();canvasAbort=null;mapGeneration++;initializing=null;clearTimeout(tileTimer);circles.forEach(remove=>remove());circles=[];for(const marker of markerEntries.values())marker.remove();markerEntries.clear();siteMarker?.remove();siteMarker=null;map?.destroy();map=null;}
  const resize=new ResizeObserver(()=>map?.resize());resize.observe(host);
  dispose=()=>{active=false;sequence++;request?.abort();abort.abort();disposeSite?.();clearTimeout(resetTimer);resetRelease();resize.disconnect();clearMap();};
- function mapFailure(){if(!active||mapError)return;mapError=true;clearTimeout(tileTimer);if(map?.kind==='google'){startMap(true);return;}mapState.hidden=false;mapState.innerHTML='<p>No pudimos cargar el mapa base. Podés consultar las células en el listado.</p><button class="button secondary" data-territory-map-retry>Reintentar mapa</button>';}
+ function mapFailure(){if(!active||mapError)return;mapError=true;clearTimeout(tileTimer);if(map?.kind==='maplibre'&&data?.provider.geoapify?.configured&&!map.fallbackReason){startMap(true);return;}mapState.hidden=false;mapState.innerHTML='<p>No pudimos cargar el mapa base. Podés consultar las células en el listado.</p><button class="button secondary" data-territory-map-retry>Reintentar mapa</button>';}
  function drawCoverage(){
   circles.forEach(remove=>remove());circles=[];if(!map||!coverage.checked)return;
   for(const c of points())if(Number.isFinite(c.coverageRadiusMeters)&&c.coverageRadiusMeters>0)circles.push(map.circle(c,c.id===selected));
@@ -49,22 +49,23 @@ export function mountTerritory(root){
   if(!siteMarker)siteMarker=map.marker({point:s,html:sitePin(),title,onSelect:()=>{selected='central';panel.innerHTML=siteDetail(data.central);panel.hidden=false;list.querySelectorAll('[data-territory-select]').forEach(b=>b.setAttribute('aria-pressed','false'));drawMarkers();drawCoverage();panel.focus({preventScroll:true});}});
   siteMarker.element.classList.add('territory-site-marker');siteMarker.update(s,selected==='central',1200,title);
  }
- function recenter(){const items=[...points(),...(site()?[site()]:[])];if(!map)return;if(items.length===1)map.setView(items[0],16);else if(items.length)map.fit(items);else map.setView(data.reference,data.reference.zoom);}
+ function recenter(){if(!map)return;const central=site();if(central)map.setView(central,16);else map.setView(data.reference,data.reference.zoom);}
  async function startMap(forceFallback=false){
   if(map&&!mapError&&!forceFallback){drawMarkers();drawCoverage();return;}
   if(initializing)return initializing;
   const previous=map?.view();clearMap();mapError=false;const generation=++mapGeneration;canvasAbort=new AbortController();
   mapState.hidden=false;mapState.textContent='Cargando mapa…';
   const task=(async()=>{try{
-   const provider=forceFallback?{...data.provider,google:{configured:false}}:data.provider;let ready=false,pendingFailure=false;
+   const provider=forceFallback?{...data.provider,geoapify:{configured:false}}:data.provider;let ready=false,pendingFailure=false;
    const canvas=await createMapCanvas(host,{provider,center:previous||data.reference,signal:canvasAbort.signal,onMove:()=>{drawMarkers();},onReady:()=>{ready=true;if(active&&!mapError){clearTimeout(tileTimer);mapState.hidden=true;}},onError:()=>{if(map)mapFailure();else pendingFailure=true;}});
    if(!active||generation!==mapGeneration||!data){canvas.destroy();return;}map=canvas;
-   const providerStatus=root.querySelector('[data-territory-provider]');providerStatus.hidden=map.kind==='google';providerStatus.textContent=map.kind==='google'?'':forceFallback||map.fallbackReason==='GOOGLE_UNAVAILABLE'?'Mapa de respaldo · Google Maps no está disponible.':'Mapa de respaldo · Google Maps pendiente de configuración.';
+   const providerStatus=root.querySelector('[data-territory-provider]');providerStatus.hidden=!map.fallbackReason;providerStatus.textContent=forceFallback?'Cartografía de respaldo · Geoapify no está disponible.':map.fallbackReason==='WEBGL_UNAVAILABLE'?'Mapa de respaldo · el motor vectorial no está disponible en este dispositivo.':map.fallbackReason?'Cartografía de respaldo · Geoapify pendiente de configuración.':'';
+
    if(!ready)tileTimer=setTimeout(mapFailure,15000);if(pendingFailure)queueMicrotask(mapFailure);if(!previous)recenter();drawMarkers();drawCoverage();
   }catch(error){if(error.name!=='AbortError')mapFailure();}finally{if(initializing===task)initializing=null;}})();initializing=task;return task;
  }
  function textList(){
-  const notice=root.querySelector('[data-territory-notice]');notice.textContent=[!points().length?'Todavía no hay células ubicadas en el mapa. Podés comenzar registrando sus lugares de reunión.':'',!points().length&&!site()?data.reference.label+' · sin ubicaciones verificadas.':'',data.canManageSite&&!site()?'Sede central pendiente de confirmar.':''].filter(Boolean).join(' ');if(data.canManageCells&&!points().length)notice.insertAdjacentHTML('beforeend',' <a href="#/oficina/celulas">Gestionar células</a>');
+  const home=root.querySelector('[data-territory-recenter]');home.disabled=!site();home.title=site()?'Restaurar la vista inicial de la sede':'La ubicación de la sede todavía no está confirmada';const notice=root.querySelector('[data-territory-notice]');notice.textContent=[!points().length?'Todavía no hay células ubicadas en el mapa. Podés comenzar registrando sus lugares de reunión.':'',!points().length&&!site()?data.reference.label+' · sin ubicaciones verificadas.':'',data.canManageSite&&!site()?'Sede central pendiente de confirmar.':''].filter(Boolean).join(' ');if(data.canManageCells&&!points().length)notice.insertAdjacentHTML('beforeend',' <a href="#/oficina/celulas">Gestionar células</a>');
   const settings=root.querySelector('[data-territory-site]');settings.hidden=!data.canManageSite;if(data.canManageSite&&!disposeSite)disposeSite=mountSiteEditor(settings,{onSaved:s=>{data.central={...s,locationAccuracy:s.verification?.accuracy};drawSite();textList();}});
   const missing=data.missingLocation,limited=data.items.filter(c=>!mappable(c)&&c.latitude!=null).length;
   status.textContent=`${data.total} células · ${missing} sin coordenadas válidas${limited?' · '+limited+' fuera de la proyección del mapa base':''}. Página ${data.page} de ${data.pages}.`;

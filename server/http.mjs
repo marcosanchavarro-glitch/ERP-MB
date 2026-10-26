@@ -33,7 +33,7 @@ import {createLeaderService} from './leader/service.mjs';
 import {leaderRouter} from './leader/http.mjs';
 const root=resolve(import.meta.dirname,'..');
 export async function createAppServer(people,{pool,config}) {
- const publicIdentity=config.branding||branding({}),mapProvider=tileProvider(config.territoryEnv||process.env),googleEnabled=mapProvider.google.configured;
+ const publicIdentity=config.branding||branding({}),mapProvider=tileProvider(config.territoryEnv||process.env);
  const escapeHtml=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const app=express();app.disable('x-powered-by');
  if(config.trustProxy)app.set('trust proxy',config.trustProxy);
@@ -42,7 +42,7 @@ export async function createAppServer(people,{pool,config}) {
   const start=Date.now();res.on('finish',()=>log('info','request',{requestId:req.requestId,method:req.method,route:req.route?.path || 'static-or-unmatched',status:res.statusCode,durationMs:Date.now()-start}));
   next();
  });
- app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'",...(googleEnabled?[(req)=>"'nonce-"+req.cspNonce+"'",'https://maps.googleapis.com','https://maps.gstatic.com']:[])],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com'],imgSrc:["'self'",'data:',mapProvider.origin,...(googleEnabled?['https://*.googleapis.com','https://*.gstatic.com','https://*.google.com','https://*.googleusercontent.com','blob:']:[])],connectSrc:["'self'",...(googleEnabled?['https://*.googleapis.com','https://*.gstatic.com','https://*.google.com','data:','blob:']:[])],...(googleEnabled?{workerSrc:["'self'",'blob:'],frameSrc:['https://*.google.com']}:{} ),frameAncestors:["'none'"],baseUri:["'none'"],formAction:["'self'"],upgradeInsecureRequests:config.production?[]:null}},referrerPolicy:{policy:'no-referrer'},strictTransportSecurity:config.production?{maxAge:31536000,includeSubDomains:true}:false}));
+ app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com'],imgSrc:["'self'",'data:','blob:',mapProvider.origin,...(mapProvider.geoapify.configured?['https://maps.geoapify.com']:[])],connectSrc:["'self'",mapProvider.origin,...(mapProvider.geoapify.configured?['https://maps.geoapify.com']:[])],workerSrc:["'self'"],frameAncestors:["'none'"],baseUri:["'none'"],formAction:["'self'"],upgradeInsecureRequests:config.production?[]:null}},referrerPolicy:{policy:'no-referrer'},strictTransportSecurity:config.production?{maxAge:31536000,includeSubDomains:true}:false}));
  app.get('/health/live',(req,res)=>res.json({status:'ok'}));
  app.get('/health/ready',async(req,res)=>{try{await pool.query('SELECT 1');res.json({status:'ok'});}catch{res.status(503).json({status:'unavailable'});}});
  app.use((req,res,next)=>{
@@ -77,7 +77,8 @@ export async function createAppServer(people,{pool,config}) {
  app.use('/api/meetings',meetingsRouter(createMeetingsService(pool)));
  app.use('/api/leader',leaderRouter(createLeaderService(pool)));
  app.use('/api',(req,res,next)=>next(new DomainError(404,'No encontramos esta operación.')));
- app.get('/',async(req,res)=>{let html=await readFile(resolve(root,'index.html'),'utf8');if(googleEnabled){res.setHeader('Referrer-Policy','origin');html=html.replace('<script type="module"',`<script nonce="${req.cspNonce}" type="module"`).replace('</head>',`<style nonce="${req.cspNonce}"></style></head>`);}res.type('html').send(html.replace('{{APP_TITLE}}',()=>escapeHtml(publicIdentity.productName)).replace('{{APP_DESCRIPTION}}',()=>escapeHtml(publicIdentity.productName+' · '+publicIdentity.organizationName)));});
+ app.get('/',async(req,res)=>{let html=await readFile(resolve(root,'index.html'),'utf8');if(mapProvider.geoapify.configured)res.setHeader('Referrer-Policy','origin');res.type('html').send(html.replace('{{APP_TITLE}}',()=>escapeHtml(publicIdentity.productName)).replace('{{APP_DESCRIPTION}}',()=>escapeHtml(publicIdentity.productName+' · '+publicIdentity.organizationName)));});
+ app.get('/vendor/maplibre/:file',(req,res,next)=>{if(!['maplibre-gl.mjs','maplibre-gl-shared.mjs','maplibre-gl-worker.mjs','maplibre-gl.css'].includes(req.params.file))return next(new DomainError(404,'No encontramos este recurso.'));res.sendFile(resolve(root,'node_modules/maplibre-gl/dist',req.params.file));});
  app.get('/vendor/leaflet/:file',(req,res,next)=>{if(!['leaflet-src.esm.js','leaflet.css'].includes(req.params.file))return next(new DomainError(404,'No encontramos este recurso.'));res.sendFile(resolve(root,'node_modules/leaflet/dist',req.params.file));});
  app.use('/src',express.static(resolve(root,'src'),{dotfiles:'deny',index:false,etag:false,maxAge:0}));
  app.use((req,res,next)=>next(new DomainError(404,'No encontramos esta página.')));

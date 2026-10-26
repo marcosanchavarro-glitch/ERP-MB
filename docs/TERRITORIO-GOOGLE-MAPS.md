@@ -1,3 +1,5 @@
+> Histórico: sustituido por MapLibre + Geoapify. No activar Google Maps para esta instalación. Ver [configuración vigente](TERRITORIO-MAPLIBRE.md).
+
 # Territorio 1.1 · Google Maps
 
 ## Implementación

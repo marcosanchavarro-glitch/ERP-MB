@@ -7,8 +7,12 @@ export function tileProvider(env=process.env){
  if(custom&&(!env.TERRITORY_TILE_ATTRIBUTION||!env.TERRITORY_TILE_ATTRIBUTION_URL))throw new Error('Public tile attribution required');
  const attributionUrl=env.TERRITORY_TILE_ATTRIBUTION_URL||'https://www.openstreetmap.org/copyright';
  if(new URL(attributionUrl).protocol!=='https:')throw new Error('Invalid attribution URL');
- const browserKey=env.GOOGLE_MAPS_BROWSER_KEY?.trim(),mapId=env.GOOGLE_MAPS_MAP_ID?.trim();
- const valid=browserKey&&mapId&&/^[A-Za-z0-9_-]{20,200}$/.test(browserKey)&&/^[A-Za-z0-9_-]{4,100}$/.test(mapId);
- const google=valid?{configured:true,apiKey:browserKey,mapId}:{configured:false};
- return {requested:'google',google,url:template,origin:url.origin,attribution:env.TERRITORY_TILE_ATTRIBUTION||'© OpenStreetMap contributors',attributionUrl,maxZoom:19};
+ // A separate public, referrer-restricted key; never reuse the private geocoder key.
+ const browserKey=env.GEOAPIFY_MAPS_BROWSER_KEY?.trim();
+ const configured=Boolean(browserKey&&/^[A-Za-z0-9_-]{20,200}$/.test(browserKey));
+ const styles=['osm-bright','osm-bright-smooth','osm-liberty','positron'];
+ const light=styles.includes(env.GEOAPIFY_MAP_STYLE)?env.GEOAPIFY_MAP_STYLE:'osm-bright';
+ const style=id=>`https://maps.geoapify.com/v1/styles/${id}/style.json?apiKey=${encodeURIComponent(browserKey)}&attribution=mandatory`;
+ const geoapify=configured?{configured:true,light:style(light),dark:style('dark-matter'),lightStyle:light,darkStyle:'dark-matter'}:{configured:false};
+ return {requested:'maplibre',geoapify,url:template,origin:url.origin,attribution:env.TERRITORY_TILE_ATTRIBUTION||'© OpenStreetMap contributors',attributionUrl,maxZoom:19};
 }
