@@ -13,3 +13,4 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 .brand-mark img{width:100%;height:100%;object-fit:contain}.login-logo{max-width:160px;max-height:72px;object-fit:contain}.demo-label{font-weight:700;color:var(--accent)}
+.brand-mark:has(img),.login-logo{background:var(--halo-paper,#F8F5EE)}

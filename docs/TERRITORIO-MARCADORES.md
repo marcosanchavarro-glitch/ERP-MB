@@ -12,7 +12,7 @@ El motor de permisos, base de datos, coordenadas confirmadas, geocodificación y
 
 ## Logo institucional
 
-No se encontró un logo oficial en el repositorio; `src/favicon.svg` pertenece a HALO y no se reutiliza como logo de la iglesia. Se necesita el archivo oficial **SVG o PNG/WebP/JPG**, preferentemente con transparencia, dentro de `/src/`, por ejemplo `/src/assets/manantial-logo.svg`.
+Logo oficial suministrado por el usuario: `src/assets/manantial-logo.png` (versión negra, PNG transparente, 1254 × 1254). Se conserva el archivo original sin cambios, con un fondo claro de presentación para mantener contraste en ambos temas. `src/favicon.svg` sigue siendo el favicon de HALO.
 
 Se configura mediante el mecanismo existente `APP_LOGO_PATH` → `identity.logo`. No se incrusta una marca ni se descarga una imagen de terceros. El pin y el detalle comparten el recurso y usan `object-fit: contain`. Sin archivo, ruta no local o fallo de carga, aparece **Sede · Provisional**. Los recursos del test del logo son sintéticos y nunca se publican como identidad institucional.
 
@@ -28,4 +28,4 @@ La aparición inicial y la elevación de selección son breves, sin animaciones 
 
 Pruebas unitarias de categorías, aislamiento de presentación/datos y recursos locales seguros; navegador con MapLibre y worker reales, controles por tipo, identidad de nodos, cámara, cobertura, tema, errores del proveedor y revocación. Prueba con logo sintético rectangular para verificar proporciones y con recurso 404 para verificar alternativa provisional. Regresiones del respaldo Leaflet, ubicación administrativa y scroll. Breakpoints: 320/360/390/430/768/1440.
 
-Las capturas de fixtures muestran solo bases aisladas; no se agregan células o sedes ficticias a producción. En la demo, la casa aparece cuando existan células con coordenadas verificadas. El logo oficial sigue pendiente de recepción.
+Las capturas de fixtures muestran solo bases aisladas; no se agregan células o sedes ficticias a producción. En la demo, la casa aparece cuando existan células con coordenadas verificadas. El recurso oficial se configura como `APP_LOGO_PATH=/src/assets/manantial-logo.png`.

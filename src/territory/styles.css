@@ -37,3 +37,4 @@
 @media(max-width:480px){.territory-marker-types{flex:0 1 auto;gap:4px 8px}.territory-marker-types legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.territory-page .territory-legend{gap:6px 12px}.territory-marker-types label{font-size:12px}}
 
 .territory-filters .territory-marker-types{margin-top:12px;padding-top:8px;border-top:1px solid var(--color-border)}.territory-marker-types label{display:flex;align-items:center;gap:6px;min-height:44px}.territory-filters .territory-marker-types input{width:18px;height:18px;min-height:18px;margin:0;padding:0}
+.territory-brand-visual:has(img:not([hidden])){background:var(--halo-paper,#F8F5EE);border-radius:8px}
