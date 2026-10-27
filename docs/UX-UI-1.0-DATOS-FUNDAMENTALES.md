@@ -19,3 +19,7 @@ Su implementación no implica otorgar nuevos accesos.
 Actualización — Organización Eclesiástica 1.0: se autorizó una primera consulta
 concreta, Cargos eclesiásticos, dentro de Datos fundamentales en Oficina. Los
 demás módulos permanecen en su ubicación y el alcance general sigue abierto.
+
+Organización Eclesiástica 1.1 agrega Áreas y departamentos junto a Cargos
+eclesiásticos, sin trasladar herramientas existentes ni definir una central
+administrativa más amplia.

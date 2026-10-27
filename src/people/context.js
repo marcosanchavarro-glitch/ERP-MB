@@ -1,3 +1,5 @@
+import {loadPersonDepartmentActivities} from '../departments/controller.js';
+import {loadPersonOrganization,canLeaveOrganization} from './organization.js';
 import {loadPersonOffice,canLeaveOffice} from './ecclesiastical.js';
 import {attendanceContext as attendanceContextView} from '../meetings/monthly-views.js';
 import {loadPersonRecommendations} from '../territory/recommendation-panel.js';
@@ -11,13 +13,13 @@ import {loadPersonCells} from '../cells/person-panel.js';
 import {request} from './api.js';
 import {profileView,profileBody,historyView,loading,errorView} from './views.js';
 import {icon} from '../icons.js';
-const canLeaveContacts=()=>canLeaveOffice()&&contactsCanLeave();
+const canLeaveContacts=()=>canLeaveOrganization()&&canLeaveOffice()&&contactsCanLeave();
 let activeDialog=null;
 let returnPath=null;
 export const personContextReturn=()=>returnPath;
 export function closePersonContext() {activeDialog?.close();}
 export async function openPersonContext(id,trigger=document.activeElement,attendance=null) {
- if(activeDialog&&!canLeaveContacts())return;closePersonContext();
+ if(!canLeaveOrganization()||activeDialog&&!canLeaveContacts())return;closePersonContext();
  returnPath=/^#\/oficina\/(cumpleanos|calidad)$/.test(location.hash)?location.hash.slice(1):null;
  const dialog=document.createElement('dialog');
  dialog.className='person-dialog';
@@ -43,7 +45,7 @@ export async function openPersonContext(id,trigger=document.activeElement,attend
    host.onclick=event=>{
     if(event.target.closest('[data-attendance-register]')){showContacts(true);return;}
     const tab=event.target.closest('[data-profile-tab]');
-    if(tab){if(!canLeaveContacts())return;host.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tab)));host.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab.dataset.profileTab);if(tab.dataset.profileTab==='ecclesiastical')loadPersonOffice(host,person.id);if(tab.dataset.profileTab==='history')loadHistory();if(tab.dataset.profileTab==='cell')loadPersonCells(host,person.id);if(tab.dataset.profileTab==='recommendations')loadPersonRecommendations(host,person.id);if(tab.dataset.profileTab==='attendance')loadPersonAttendance(host,person.id);if(tab.dataset.profileTab==='officeContacts')loadPersonContacts(host,person.id,contactOptions);if(tab.dataset.profileTab==='followup')loadPersonFollowup(host,person.id);}
+    if(tab){if(!canLeaveContacts())return;host.querySelectorAll('[data-profile-tab]').forEach(el=>el.setAttribute('aria-pressed',String(el===tab)));host.querySelector('[data-profile-body]').innerHTML=profileBody(person,tab.dataset.profileTab);if(tab.dataset.profileTab==='departmentActivities')loadPersonDepartmentActivities(host,person.id);if(tab.dataset.profileTab==='areas')loadPersonOrganization(host,person.id);if(tab.dataset.profileTab==='ecclesiastical')loadPersonOffice(host,person.id);if(tab.dataset.profileTab==='history')loadHistory();if(tab.dataset.profileTab==='cell')loadPersonCells(host,person.id);if(tab.dataset.profileTab==='recommendations')loadPersonRecommendations(host,person.id);if(tab.dataset.profileTab==='attendance')loadPersonAttendance(host,person.id);if(tab.dataset.profileTab==='officeContacts')loadPersonContacts(host,person.id,contactOptions);if(tab.dataset.profileTab==='followup')loadPersonFollowup(host,person.id);}
     const page=event.target.closest('[data-history-page]');if(page)loadHistory(page.dataset.historyPage);
     if(event.target.closest('[data-people-action="retry"]'))loadHistory();
    };

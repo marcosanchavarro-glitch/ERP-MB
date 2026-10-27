@@ -1,3 +1,6 @@
+import {mountHome,unmountHome} from './home/controller.js';
+import {departmentRoute,mountDepartments,unmountDepartments} from './departments/controller.js';
+import {organizationRoute,mountOrganization,unmountOrganization,canLeaveOrganization} from './people/organization.js';
 import {mountOfficeCatalog} from './people/ecclesiastical.js';
 import {evangelismRoute,mountEvangelism,unmountEvangelism,canLeaveEvangelism} from './territory/evangelism-controller.js';
 import {territoryRoute,mountTerritory,unmountTerritory} from './territory/controller.js';
@@ -31,7 +34,7 @@ const app = document.querySelector('#app');
 document.querySelector('.skip-link')?.addEventListener('click',event=>{event.preventDefault();document.querySelector('#main')?.focus();});
 const mobile = () => matchMedia('(max-width: 760px)').matches;
 // Visual accent is resolved by semantic theme tokens.
-function permittedOther(path){path=path.split('?')[0];const paths=sessionState.user?.access?.paths||[];return paths.some(p=>path===p.path||path.startsWith(p.path+'/')&&!navigation.some(area=>area.path===p.path)||p.path.startsWith(path+'/'));}
+function permittedOther(path){path=path.split('?')[0];const department=departmentRoute(path);if(department){const access=sessionState.user?.access?.departmentAccess;return Boolean(access&&(department.unitId?(access.all||access.ids.includes(department.unitId)):(access.all||access.ids.length)));}const paths=sessionState.user?.access?.paths||[];return paths.some(p=>path===p.path||path.startsWith(p.path+'/')&&!navigation.some(area=>area.path===p.path)||p.path.startsWith(path+'/'));}
 function visibleNavigation(){const portal=sessionState.user?.access?.leaderPortal?[leaderNode]:[];return [...portal,...navigation.filter(n=>n.path==='/').concat(navigation.filter(n=>n.path!=='/').map(n=>({...n,children:n.children.filter(c=>permittedOther(c.path))})).filter(n=>permittedOther(n.path)||n.children.length))];}
 // Keep scroll containers and focused controls alive during local shell updates.
 function updateSidebar(route){
@@ -48,7 +51,7 @@ function updateSidebar(route){
 }
 function afterLogin(){
  const path=location.hash.slice(1)||'/';
- if(sessionState.user.access?.leaderPortal&&!leaderRoute(path)&&!permittedOther(path)&&!(path==='/'&&sessionState.user.access.portalLanding===false)){
+ if(path!=='/'&&sessionState.user.access?.leaderPortal&&!leaderRoute(path)&&!permittedOther(path)&&!(path==='/'&&sessionState.user.access.portalLanding===false)){
   history.replaceState(null,'',location.pathname+location.search+'#/mi-celula');previousHash=location.hash;
  }else if(!sessionState.user.access?.leaderPortal&&leaderRoute(path)){
   history.replaceState(null,'',location.pathname+location.search+'#/');previousHash=location.hash;
@@ -59,7 +62,7 @@ function render(moveFocus = false,refreshContent = true) {
  if(!sessionState.user)return;
  if(!history.state?.haloEntry)history.replaceState({...history.state,haloEntry:crypto.randomUUID()},'');
  let path=location.hash.slice(1) || '/';
- if(sessionState.user.access?.leaderPortal&&sessionState.user.access?.portalLanding!==false&&path==='/'){path='/mi-celula';history.replaceState(null,'',location.pathname+location.search+'#'+path);previousHash=location.hash;}
+
  const leader=leaderRoute(path);
  const leaderContext=Boolean(leader||(sessionState.user.access?.leaderPortal&&path!=='/'&&!permittedOther(path)));
  const work=workRoute(path);
@@ -70,10 +73,12 @@ function render(moveFocus = false,refreshContent = true) {
  const identityRoute=adminRoute(path);
  const allowed=path==='/'||permittedOther(path.split('?')[0]);
  const followRoute=followupRoute(path);
+ const deptRoute=departmentRoute(path);
+ const orgRoute=organizationRoute(path);
  const personRoute=peopleRoute(path);
  const cellRoute=cellsRoute(path);
  const meetingRoute=meetingsRoute(path),evRoute=evangelismRoute(path);
- const route = leaderContext?{area:leaderNode,section:leaderNode}:resolveRoute(work?(work.kind==='monthly'?'/oficina/asistencia':'/oficina/trabajo'):matrixImport?'/oficina/importar-exportar':citaRoute?'/oficina/citas':newRoute?(newRoute.kind==='reception'?'/recepcion':'/oficina/nuevos'):insightRoute?('/oficina/'+({birthdays:'cumpleanos',quality:'calidad',dashboard:'dashboard'}[insightRoute])):identityRoute?(identityRoute.kind==='roles'?'/administracion/roles':identityRoute.kind==='audit'?'/administracion/auditoria':'/administracion/usuarios'):followRoute?'/oficina/seguimiento':personRoute?'/oficina/personas':cellRoute?'/oficina/celulas':meetingRoute?'/oficina/asistencia':evRoute?'/territorio/evangelismo':path);
+ const route = leaderContext?{area:leaderNode,section:leaderNode}:resolveRoute(deptRoute?'/departamentos':work?(work.kind==='monthly'?'/oficina/asistencia':'/oficina/trabajo'):matrixImport?'/oficina/importar-exportar':citaRoute?'/oficina/citas':newRoute?(newRoute.kind==='reception'?'/recepcion':'/oficina/nuevos'):insightRoute?('/oficina/'+({birthdays:'cumpleanos',quality:'calidad',dashboard:'dashboard'}[insightRoute])):identityRoute?(identityRoute.kind==='roles'?'/administracion/roles':identityRoute.kind==='audit'?'/administracion/auditoria':'/administracion/usuarios'):followRoute?'/oficina/seguimiento':orgRoute?'/oficina/areas':personRoute?'/oficina/personas':cellRoute?'/oficina/celulas':meetingRoute?'/oficina/asistencia':evRoute?'/territorio/evangelismo':path);
  themeContext(route?.area.id,route?.section!==route?.area?route?.section.id:'');
  if(!refreshContent && app.querySelector('.shell')) {
   app.querySelector('.shell').className=`shell ${leaderContext?'leader-shell':''} ${collapsed?'is-collapsed':''} ${mobileOpen?'nav-open':''}`;
@@ -84,7 +89,7 @@ function render(moveFocus = false,refreshContent = true) {
   app.querySelector('[data-action="toggle-nav"]').setAttribute('aria-expanded',String(mobile()?mobileOpen:!collapsed));
   return;
  }
- unmountEvangelism();unmountTerritory();unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
+ unmountHome();unmountDepartments();unmountOrganization();unmountEvangelism();unmountTerritory();unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();
  const initialContent=leaderContext?'':route ? route.section.path==='/'?home(visibleNavigation(),sessionState.user):placeholder({...route,area:{...route.area,children:route.area.children.filter(c=>permittedOther(c.path))},section:route.section===route.area?{...route.section,children:route.section.children.filter(c=>permittedOther(c.path))}:route.section}):`${pageTitle('Navegación','No encontramos esta sección.','Podés volver al inicio y explorar las áreas del ERP.')}${buttonLink('/','Volver al inicio')}`;
  if(app.querySelector('.shell')?.dataset.sessionUser===sessionState.user.id){
   render(false,false);app.querySelector('.topbar').innerHTML=topbar(route,sessionState.user);const previousMain=app.querySelector('#main'),nextMain=previousMain.cloneNode(false);nextMain.style.removeProperty('min-height');previousMain.replaceWith(nextMain);nextMain.innerHTML=initialContent;
@@ -101,7 +106,7 @@ function render(moveFocus = false,refreshContent = true) {
  main.className=leaderContext?'content leader-main':'content';
  if(leaderContext){if(leader)mountLeader(main,leader);else main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p><a class="button" href="#/mi-celula">Volver a Mi Célula</a>';}
  else if(!allowed)main.innerHTML='<h1>Acceso no disponible</h1><p>Esta sección no está disponible.</p>';
- else if(path==='/'&&main.querySelector('[data-home-work]'))mountOffice(main.querySelector('[data-home-work]'),'home',{omitPaths:[...main.querySelectorAll('.halo-portal')].map(a=>a.getAttribute('href').slice(1))});
+ else if(path==='/')mountHome(main.querySelector('[data-home-work]'));
  else if(evRoute)mountEvangelism(main);
  else if(territoryRoute(path))mountTerritory(main);
  else if(work)mountWork(main,work);
@@ -113,6 +118,8 @@ function render(moveFocus = false,refreshContent = true) {
  else if(identityRoute)mountAdmin(main,identityRoute);
  else if(followRoute)mountFollowup(main,followRoute);
  else if(path==='/oficina/cargos')mountOfficeCatalog(main);
+ else if(deptRoute)mountDepartments(main,deptRoute);
+ else if(orgRoute)mountOrganization(main,orgRoute);
  else if(personRoute)mountPeople(main,personRoute);
  else if(cellRoute)mountCells(main,cellRoute);
  else if(meetingRoute)mountMeetings(main,meetingRoute);
@@ -125,7 +132,7 @@ app.addEventListener('click', event => {
  const expand = event.target.closest('[data-expand]');
  if(expand) {expanded = expanded===expand.dataset.expand?null:expand.dataset.expand; collapsed=false; render(false,false); document.querySelector(`[data-expand="${expand.dataset.expand}"]`).focus({preventScroll:true}); return;}
  const action = event.target.closest('[data-action]')?.dataset.action;
- if(action==='logout'){if(canLeaveEvangelism()&&canLeaveContacts()&&canLeaveWork()&&canLeaveImport()&&canLeaveAppointments()&&canLeaveNewcomers()&&canLeaveIntegration()&&canLeaveAdmin()&&canLeaveFollowup()&&canLeavePeople()&&canLeaveCells()&&canLeaveMeetings()&&canLeaveLeader()&&canLeaveQuick())logout().then(()=>{unmountEvangelism();unmountTerritory();unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closeQuickPerson();closePersonContext();closeCellContext();app.innerHTML='';showLogin(afterLogin);}).catch(error=>window.alert(error.message));return;}
+ if(action==='logout'){if(canLeaveOrganization()&&canLeaveEvangelism()&&canLeaveContacts()&&canLeaveWork()&&canLeaveImport()&&canLeaveAppointments()&&canLeaveNewcomers()&&canLeaveIntegration()&&canLeaveAdmin()&&canLeaveFollowup()&&canLeavePeople()&&canLeaveCells()&&canLeaveMeetings()&&canLeaveLeader()&&canLeaveQuick())logout().then(()=>{unmountHome();unmountDepartments();unmountOrganization();unmountEvangelism();unmountTerritory();unmountWork();unmountImport();unmountAppointments();unmountNewcomers();unmountIntegration();unmountOffice();unmountAdmin();unmountFollowup();unmountPeople();unmountCells();unmountMeetings();unmountLeader();closeQuickPerson();closePersonContext();closeCellContext();app.innerHTML='';showLogin(afterLogin);}).catch(error=>window.alert(error.message));return;}
  if(action==='toggle-nav') {if(mobile()) mobileOpen=!mobileOpen; else collapsed=!collapsed; render(false,false); document.querySelector(mobile()?'.sidebar .brand':'[data-action="toggle-nav"]').focus({preventScroll:true});}
  if(action==='close') closeMenu();
  if(event.target.closest('a[href^="#/"]') && mobileOpen) {mobileOpen=false; render(false,false);}
@@ -143,14 +150,14 @@ document.addEventListener('keydown',event=>{
 });
 let previousHash=location.hash;
 window.addEventListener('hashchange',()=>{
- if(!canLeaveEvangelism()||!canLeaveContacts()||!canLeaveWork()||!canLeaveImport()||!canLeaveAppointments()||!canLeaveNewcomers()||!canLeaveIntegration()||!canLeaveAdmin()||!canLeaveFollowup()||!canLeavePeople()||!canLeaveCells()||!canLeaveMeetings()||!canLeaveLeader()||!canLeaveQuick()){history.replaceState(null,'',`${location.pathname}${location.search}${previousHash}`);return;}
+ if(!canLeaveOrganization()||!canLeaveEvangelism()||!canLeaveContacts()||!canLeaveWork()||!canLeaveImport()||!canLeaveAppointments()||!canLeaveNewcomers()||!canLeaveIntegration()||!canLeaveAdmin()||!canLeaveFollowup()||!canLeavePeople()||!canLeaveCells()||!canLeaveMeetings()||!canLeaveLeader()||!canLeaveQuick()){history.replaceState(null,'',`${location.pathname}${location.search}${previousHash}`);return;}
  const traversal=Boolean(history.state?.haloEntry);
  previousHash=location.hash;closeQuickPerson();closePersonContext();closeCellContext();
- const path=location.hash.slice(1),route=resolveRoute(peopleRoute(path)?'/oficina/personas':cellsRoute(path)?'/oficina/celulas':meetingsRoute(path)?'/oficina/asistencia':evangelismRoute(path)?'/territorio/evangelismo':path);
+ const path=location.hash.slice(1),route=resolveRoute(departmentRoute(path)?'/departamentos':organizationRoute(path)?'/oficina/areas':peopleRoute(path)?'/oficina/personas':cellsRoute(path)?'/oficina/celulas':meetingsRoute(path)?'/oficina/asistencia':evangelismRoute(path)?'/territorio/evangelismo':path);
  expanded=route?.area.children.length?route.area.id:null;mobileOpen=false;render(!traversal);if(!traversal)window.scrollTo(0,0);
 });
 matchMedia('(max-width: 760px)').addEventListener('change',()=>{mobileOpen=false;render(false,false);});
-expanded=resolveRoute(peopleRoute(location.hash.slice(1))?'/oficina/personas':cellsRoute(location.hash.slice(1))?'/oficina/celulas':meetingsRoute(location.hash.slice(1))?'/oficina/asistencia':evangelismRoute(location.hash.slice(1))?'/territorio/evangelismo':location.hash.slice(1))?.area.id || null;
+expanded=resolveRoute(departmentRoute(location.hash.slice(1))?'/departamentos':organizationRoute(location.hash.slice(1))?'/oficina/areas':peopleRoute(location.hash.slice(1))?'/oficina/personas':cellsRoute(location.hash.slice(1))?'/oficina/celulas':meetingsRoute(location.hash.slice(1))?'/oficina/asistencia':evangelismRoute(location.hash.slice(1))?'/territorio/evangelismo':location.hash.slice(1))?.area.id || null;
 installPersonContext();installCellContext();
 window.addEventListener('session-expired',()=>{
  const previousUser=sessionState.user?.id,previousPortal=sessionState.user?.access?.leaderPortal,previousAccess=JSON.stringify(sessionState.user?.access);closePersonContext();closeCellContext();

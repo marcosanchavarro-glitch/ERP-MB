@@ -17,5 +17,5 @@ test('UX/UI: switch accesible, SVG y opción automática conservada',()=>{
  const html=themeControl();assert.match(html,/type="button"[^>]*role="switch"[^>]*aria-label="Modo oscuro"[^>]*aria-checked="false"/);assert.ok(html.includes('data-icon="sun"'));assert.ok(html.includes('data-icon="moon"'));assert.ok(html.includes('value="system"'));assert.ok(html.includes('data-theme-preference-control'));
 });
 test('UX/UI: encabezados y descripciones reutilizados sin nuevas pantallas',()=>{
- const html=home(navigation);assert.ok(html.includes(sectionDescriptions['oficina-personas']));assert.ok(html.includes(sectionDescriptions['territorio-mapa']));assert.ok(!pageTitle('Oficina','Personas','').includes('<p></p>'));assert.ok(pageTitle('Oficina','Personas','Una oración.').includes('<p>Una oración.</p>'));assert.ok(!navigation.some(n=>n.path.includes('fundamentales')));
+ const html=home(navigation);assert.ok(html.includes('data-home-work'));assert.ok(!html.includes('halo-portal'));assert.ok(!pageTitle('Oficina','Personas','').includes('<p></p>'));assert.ok(pageTitle('Oficina','Personas','Una oración.').includes('<p>Una oración.</p>'));assert.ok(!navigation.some(n=>n.path.includes('fundamentales')));
 });

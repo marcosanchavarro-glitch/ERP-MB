@@ -4,11 +4,11 @@ import {navigation,resolveRoute,statuses,createNavigation} from '../src/config.j
 import {iconLibrary,isIconId,searchIcons,icon,moduleIcon} from '../src/icons.js';
 import {home,placeholder,sidebar,officeLanding} from '../src/components.js';
 test('Áreas, estados y rutas únicas',()=>{
- assert.equal(navigation.length,13);
+ assert.equal(navigation.length,14);
  const nodes=navigation.flatMap(area=>[area,...area.children]);
  assert.equal(new Set(nodes.map(n=>n.path)).size,nodes.length);
  assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length);
- for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','oficina-importar-exportar','oficina-citas','oficina-dashboard','oficina-trabajo','oficina-cargos','recepcion','administracion-usuarios','administracion-roles','administracion-auditoria','territorio-mapa','territorio-analisis','territorio-evangelismo'].includes(node.id)?'ACTIVE':['oficina','administracion','territorio'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
+ for(const node of nodes){assert.equal(resolveRoute(node.path).section,node);assert.equal(node.status,node.path==='/'||['oficina-personas','oficina-celulas','oficina-asistencia','oficina-seguimiento','oficina-cumpleanos','oficina-calidad','oficina-nuevos','oficina-importar-exportar','oficina-citas','oficina-dashboard','oficina-trabajo','oficina-cargos','oficina-areas','recepcion','departamentos','administracion-usuarios','administracion-roles','administracion-auditoria','territorio-mapa','territorio-analisis','territorio-evangelismo'].includes(node.id)?'ACTIVE':['oficina','administracion','territorio'].includes(node.id)?'DEVELOPMENT':'PLANNED');}
  assert.deepEqual(Object.keys(statuses),['PLANNED','DEVELOPMENT','ACTIVE']);
 });
 test('Todos los enlaces internos resuelven y los módulos pendientes tienen placeholder',()=>{
@@ -18,7 +18,7 @@ test('Todos los enlaces internos resuelven y los módulos pendientes tienen plac
  assert.equal(resolveRoute('/inexistente'),null);
 });
 test('Estructura prevista de Oficina, Territorio y Administración',()=>{
- assert.equal(navigation.find(n=>n.id==='oficina').children.length,13);
+ assert.equal(navigation.find(n=>n.id==='oficina').children.length,14);
  assert.equal(navigation.find(n=>n.id==='territorio').children.length,6);
  assert.equal(navigation.find(n=>n.id==='administracion').children.length,5);
 });

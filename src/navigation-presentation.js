@@ -2,7 +2,7 @@
 export const officeGroups=Object.freeze([
  {id:'daily',name:'Trabajo diario',ids:['oficina-trabajo','oficina-asistencia','oficina-seguimiento','oficina-citas','oficina-dashboard']},
  {id:'community',name:'Comunidad',ids:['oficina-personas','oficina-celulas','oficina-nuevos','oficina-cumpleanos']},
- {id:'fundamentals',name:'Datos fundamentales',ids:['oficina-cargos']},
+ {id:'fundamentals',name:'Datos fundamentales',ids:['oficina-cargos','oficina-areas']},
  {id:'data',name:'Datos y revisión',ids:['oficina-calidad','oficina-importar-exportar','oficina-auditoria']}
 ]);
 export function officeNavigationGroups(children){
@@ -10,6 +10,7 @@ export function officeNavigationGroups(children){
  const other=children.filter(c=>!used.has(c.id));if(other.length)groups.push({id:'other',name:'Otras herramientas',items:other});return groups;
 }
 export const sectionDescriptions=Object.freeze({
+ 'oficina-areas':'Consultá áreas, departamentos y responsabilidades organizativas.',
  'oficina-cargos':'Consultá la jerarquía y los cargos vigentes registrados.',
  'oficina-trabajo':'Organizá los contactos y pendientes que necesitan atención hoy.',
  'oficina-dashboard':'Identificá pendientes y accedé a las tareas prioritarias de Oficina.',

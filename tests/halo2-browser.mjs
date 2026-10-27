@@ -24,7 +24,7 @@ const screens=[['inicio','/','.halo-home'],['oficina','/oficina/trabajo','.work-
 try{
  await page.goto(server.base);await page.getByLabel('Usuario',{exact:true}).fill(x.user.username);await page.getByLabel('Contraseña',{exact:true}).fill(x.user.password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.locator('#login-form').waitFor({state:'detached'});
  for(const mode of ['light','dark']){await theme(mode);
-  for(const [name,path,ready]of screens){await page.goto(server.base+'/#'+path);await page.locator(ready).first().waitFor();if(name==='inicio')await page.locator('[data-home-work] [data-dashboard-content][aria-busy=true]').waitFor({state:'detached'});await page.evaluate(()=>document.fonts.ready);
+  for(const [name,path,ready]of screens){await page.goto(server.base+'/#'+path);await page.locator(ready).first().waitFor();if(name==='inicio')await page.locator('[data-home-results][aria-busy=true]').waitFor({state:'detached'});await page.evaluate(()=>document.fonts.ready);
    for(const width of [320,360,390,430,768,1024,1600]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),mode+' '+name+' '+width+' overflow');
     if(width===390&&['inicio','oficina','personas','asistencia'].includes(name)||width===1600&&['inicio','oficina','personas','asistencia','mi-celula','administracion','formacion','multimedia','hdr'].includes(name))await shot(mode+'-'+name+'-'+width);
     if(width<431&&await page.locator('.halo-heading').count())assert.ok(await page.locator('.halo-heading').first().evaluate(e=>e.getBoundingClientRect().height<400),name+' hero too tall');

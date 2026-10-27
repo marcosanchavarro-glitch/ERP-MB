@@ -10,6 +10,11 @@ export async function grantRuntime(pool,role){
  GRANT SELECT,INSERT ON evangelism_events TO ${role};
  GRANT SELECT ON ecclesiastical_offices,ecclesiastical_periods TO ${role};
  GRANT SELECT,INSERT ON ecclesiastical_appointments TO ${role};
+ GRANT SELECT,INSERT,UPDATE ON organizational_units,organizational_assignments TO ${role};
+ GRANT SELECT,INSERT ON organizational_events TO ${role};
+ GRANT SELECT,INSERT,UPDATE ON departmental_activities TO ${role};
+ GRANT SELECT,INSERT,DELETE ON departmental_activity_participants TO ${role};
+ GRANT SELECT,INSERT ON departmental_activity_events TO ${role};
  GRANT SELECT,INSERT ON cell_events,cell_operations TO ${role};
  GRANT SELECT,INSERT ON cell_schedules,meeting_events TO ${role};
  GRANT SELECT,INSERT,UPDATE ON cell_meetings,meeting_attendance TO ${role};

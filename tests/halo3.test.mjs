@@ -23,6 +23,6 @@ test('HALO 3: proporciones reales, enlaces de detalle y etiquetas escapadas',()=
 test('HALO 3: portales salen únicamente de la navegación efectiva recibida',()=>{
  const area={id:'hdr',name:'HDR',path:'/hdr',description:'Comunidad',status:'ACTIVE',icon:'users',children:[]};
  const html=home([area],{username:'Prueba'});
- assert.match(html,/class="halo-portal"/);assert.doesNotMatch(html,/#\/oficina|#\/administracion/);
+ assert.match(html,/data-home-work/);assert.doesNotMatch(html,/#\/oficina|#\/administracion/);
  assert.doesNotMatch(home([]),/class="halo-portal"/);
 });

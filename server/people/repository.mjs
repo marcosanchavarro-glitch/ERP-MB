@@ -29,6 +29,15 @@ export async function listPeople(client,query={},scope={all:true}) {
   where.push(query.office==='NONE'?'NOT EXISTS(SELECT 1 FROM ecclesiastical_appointments a WHERE a.person_id=people.id)':`EXISTS(SELECT 1 FROM ecclesiastical_appointments a WHERE a.person_id=people.id AND a.office_id=${bind(query.office)} AND NOT EXISTS(SELECT 1 FROM ecclesiastical_appointments newer WHERE newer.person_id=a.person_id AND (newer.effective_date>a.effective_date OR (newer.effective_date=a.effective_date AND newer.sequence>a.sequence))))`);
  }
  if(query.locality)where.push(`"localityKey"=${bind(normalizeText(query.locality))}`);
+ if(query.organizationUnit||query.responsibility||query.participation){
+  const conditions=['a.person_id=people.id'];
+  if(query.organizationUnit){if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query.organizationUnit))throw new DomainError(422,'Área no válida.');conditions.push('a.unit_id='+bind(query.organizationUnit));}
+  if(query.responsibility)conditions.push('a.responsibility_key='+bind(normalizeText(query.responsibility)));
+  if(query.participation&&!['current','ended','any'].includes(query.participation))throw new DomainError(422,'Participación no válida.');
+  if(query.participation!=='any')conditions.push(query.participation==='ended'?'a.end_date IS NOT NULL':'a.end_date IS NULL');
+  if(['any','ended'].includes(query.participation)){const hs=scope.organizationHistory||{all:true,ids:[]};conditions.push(`(a.end_date IS NULL OR ${bind(hs.all)} OR a.person_id=ANY(${bind(hs.ids||[])}::uuid[]))`);}
+  where.push('EXISTS(SELECT 1 FROM organizational_assignments a WHERE '+conditions.join(' AND ')+')');
+ }
  const complete=completenessFields.map(key=>`${quote(key)} IS NOT NULL`).join(' AND ');
  if(query.completeness==='complete')where.push(`(${complete})`);
  if(query.completeness==='incomplete')where.push(`NOT (${complete})`);
